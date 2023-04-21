@@ -3,10 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import './providers/models_provider.dart';
-import 'constants/constants.dart';
-import 'screens/chat_screen.dart';
+import './constants/constants.dart';
+import './screens/chat_screen.dart';
+import './services/text_to_speach.dart';
+import 'screens/home_screen.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  TextToSpeech.initTTS();
   runApp(const MyApp());
 }
 
@@ -33,7 +37,8 @@ class MyApp extends StatelessWidget {
             appBarTheme: AppBarTheme(
               color: cardColor,
             )),
-        home: const ChatScreen(),
+        // home: const ChatScreen(),
+        home: HomePage(),
       ),
     );
   }

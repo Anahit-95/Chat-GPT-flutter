@@ -1,8 +1,10 @@
 import 'dart:developer';
 
+import 'package:avatar_glow/avatar_glow.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:provider/provider.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 
 import '../constants/constants.dart';
 import '../providers/chats_provider.dart';
@@ -13,6 +15,7 @@ import '../services/services.dart';
 import '../services/text_to_speach.dart';
 import '../widgets/chat_widget.dart';
 import '../widgets/text_widget.dart';
+import './audio_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -23,10 +26,12 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   bool _isTyping = false;
+  bool _isListening = false;
 
   late TextEditingController textEditingController;
   late ScrollController _listScrollController;
   late FocusNode focusNode;
+  late SpeechToText speechToText;
 
   // List<ChatModel> chatList = [];
 
@@ -35,6 +40,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _listScrollController = ScrollController();
     textEditingController = TextEditingController();
     focusNode = FocusNode();
+    speechToText = SpeechToText();
     super.initState();
   }
 
@@ -43,6 +49,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _listScrollController.dispose();
     textEditingController.dispose();
     focusNode.dispose();
+    speechToText.cancel();
     super.dispose();
   }
 
@@ -130,7 +137,12 @@ class _ChatScreenState extends State<ChatScreen> {
         title: const Text('ChatGPT'),
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Image.asset(AssetsManager.openaiLogo),
+          child: GestureDetector(
+            onTap: () {
+              Navigator.of(context).pushNamed('/');
+            },
+            child: Image.asset(AssetsManager.openaiLogo),
+          ),
         ),
         actions: [
           IconButton(
@@ -194,17 +206,46 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                       ),
                     ),
-                    IconButton(
-                      onPressed: () async {
-                        await sendMessageFCT(
-                          modelsProvider: modelsProvider,
-                          chatProvider: chatProvider,
-                        );
-                      },
-                      icon: const Icon(
-                        Icons.send,
-                        color: Colors.white,
-                      ),
+                    Row(
+                      children: [
+                        IconButton(
+                          onPressed: () async {
+                            if (!_isListening) {
+                              var available = await speechToText.initialize();
+                              if (available) {
+                                setState(() {
+                                  _isListening = true;
+                                  speechToText.listen(
+                                    onResult: (result) {
+                                      setState(() {
+                                        textEditingController.text =
+                                            result.recognizedWords;
+                                      });
+                                    },
+                                  );
+                                });
+                              }
+                            }
+                          },
+                          icon: const Icon(
+                            Icons.mic,
+                            size: 25,
+                            color: Colors.white,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () async {
+                            await sendMessageFCT(
+                              modelsProvider: modelsProvider,
+                              chatProvider: chatProvider,
+                            );
+                          },
+                          icon: const Icon(
+                            Icons.send,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -213,6 +254,35 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         ),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: _isListening
+          ? AvatarGlow(
+              endRadius: 75.0,
+              animate: _isListening,
+              duration: Duration(milliseconds: 2000),
+              glowColor: Colors.white,
+              repeat: true,
+              repeatPauseDuration: Duration(milliseconds: 100),
+              showTwoGlows: true,
+              child: GestureDetector(
+                onTap: () async {
+                  setState(() {
+                    _isListening = false;
+                  });
+                  await speechToText.stop();
+                },
+                child: CircleAvatar(
+                  radius: 35,
+                  backgroundColor: scaffoldBackgroundColor,
+                  child: Icon(
+                    Icons.mic,
+                    color: Colors.deepOrange,
+                    size: 30,
+                  ),
+                ),
+              ),
+            )
+          : null,
     );
   }
 }

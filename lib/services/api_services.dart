@@ -8,6 +8,7 @@ import '../models/models_model.dart';
 import '../constants/api_consts.dart';
 
 class ApiService {
+  static List<Map<String, String>> messages = [];
   static Future<List<ModelsModel>> getModels() async {
     try {
       var response = await http.get(Uri.parse('$BASE_URL/models'),
@@ -83,6 +84,10 @@ class ApiService {
 
   static Future<List<ChatModel>> sendMessageGPT(
       {required String message, required String modelId}) async {
+    messages.add({
+      'role': 'user',
+      'content': message,
+    });
     try {
       log('modelId $modelId');
       var response = await http.post(
@@ -95,10 +100,12 @@ class ApiService {
           {
             "model": modelId,
             "messages": [
-              {
-                "role": "user",
-                "content": message,
-              }
+              {"role": "system", "content": "You are a helpfull assistant."},
+              ...messages,
+              // {
+              //   "role": "user",
+              //   "content": message,
+              // }
             ]
           },
         ),
@@ -123,7 +130,33 @@ class ApiService {
           ),
         );
       }
+      messages.add({
+        'role': 'assistant',
+        'content': jsonResponse["choices"][0]["message"]["content"],
+      });
       return chatList;
+    } catch (error) {
+      log("error $error");
+      rethrow;
+    }
+  }
+
+  // audio transcription
+
+  static Future<String> convertSpeechToText(String filePath) async {
+    var url = Uri.parse('$BASE_URL/audio/transcriptions');
+    try {
+      var request = http.MultipartRequest('POST', url);
+      request.headers.addAll(({"Authorization": "Bearer $API_KEY"}));
+      request.fields['model'] = 'whisper-1';
+      request.fields['language'] = 'en';
+      request.files.add(await http.MultipartFile.fromPath("file", filePath));
+
+      var response = await request.send();
+      var newResponse = await http.Response.fromStream(response);
+      final responseData = json.decode(newResponse.body);
+      print(responseData);
+      return responseData['text'];
     } catch (error) {
       log("error $error");
       rethrow;
