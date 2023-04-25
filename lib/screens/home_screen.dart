@@ -8,7 +8,10 @@ class HomePage extends StatelessWidget {
   final List<Bot> bots = [
     Bot(title: 'Simple Bot', iconData: Icons.android, color: Colors.red),
     Bot(title: 'Audio Reader', iconData: Icons.audio_file, color: Colors.blue),
-    Bot(title: 'Bot3', iconData: Icons.book, color: Colors.green),
+    Bot(
+        title: 'Audio Translater',
+        iconData: Icons.translate,
+        color: Colors.green),
     Bot(title: 'Bot4', iconData: Icons.camera, color: Colors.purple),
     Bot(title: 'Bot5', iconData: Icons.cake, color: Colors.orange),
     Bot(title: 'Bot6', iconData: Icons.headset, color: Colors.teal),

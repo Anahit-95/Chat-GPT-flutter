@@ -29,11 +29,19 @@ class BotWidget extends StatelessWidget {
           case 'Audio Reader':
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => AudioToText()),
+              MaterialPageRoute(
+                  builder: (context) => AudioToText(title: title)),
+            );
+            break;
+          case 'Audio Translater':
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => AudioToText(title: title)),
             );
             break;
           default:
-            Navigator.of(context).pushNamed('/');
+            Navigator.of(context).pushReplacementNamed('/');
         }
       },
       child: Card(

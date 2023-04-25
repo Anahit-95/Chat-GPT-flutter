@@ -122,18 +122,19 @@ class ApiService {
 
       if (jsonResponse["choices"].length > 0) {
         // log("jsonResponse[choices]text ${jsonResponse["choices"][0]["text"]}");
-        chatList = List.generate(
-          jsonResponse['choices'].length,
-          (index) => ChatModel(
-            msg: jsonResponse["choices"][index]["message"]["content"],
-            chatIndex: 1,
-          ),
-        );
+        chatList = List.generate(jsonResponse['choices'].length, (index) {
+          var utf8decoder = Utf8Decoder(allowMalformed: true);
+          String decodedText = utf8decoder.convert(
+              jsonResponse['choices'][index]['message']['content'].codeUnits);
+
+          messages.add({
+            'role': 'assistant',
+            'content': decodedText,
+          });
+          return ChatModel(msg: decodedText, chatIndex: 1);
+        });
       }
-      messages.add({
-        'role': 'assistant',
-        'content': jsonResponse["choices"][0]["message"]["content"],
-      });
+
       return chatList;
     } catch (error) {
       log("error $error");
@@ -149,14 +150,42 @@ class ApiService {
       var request = http.MultipartRequest('POST', url);
       request.headers.addAll(({"Authorization": "Bearer $API_KEY"}));
       request.fields['model'] = 'whisper-1';
-      request.fields['language'] = 'en';
+      // request.fields['language'] = 'ru';
       request.files.add(await http.MultipartFile.fromPath("file", filePath));
 
+      var utf8decoder = Utf8Decoder(allowMalformed: true);
       var response = await request.send();
       var newResponse = await http.Response.fromStream(response);
       final responseData = json.decode(newResponse.body);
+      final responseText = utf8decoder.convert(responseData['text'].codeUnits);
       print(responseData);
-      return responseData['text'];
+      return responseText;
+    } catch (error) {
+      log("error $error");
+      rethrow;
+    }
+  }
+
+  // translate the text from audio file in english
+
+  static Future<String> translateSpeechToEnglish(String filePath) async {
+    var url = Uri.parse('$BASE_URL/audio/translations');
+    try {
+      var request = http.MultipartRequest('POST', url);
+      request.headers.addAll(({"Authorization": "Bearer $API_KEY"}));
+      request.fields['model'] = 'whisper-1';
+      // request.fields['language'] = 'en';
+      request.files.add(await http.MultipartFile.fromPath("file", filePath));
+
+      var utf8decoder = Utf8Decoder(allowMalformed: true);
+      // String decodedText = utf8decoder.convert(
+      //     jsonResponse['choices'][index]['message']['content'].codeUnits);
+      var response = await request.send();
+      var newResponse = await http.Response.fromStream(response);
+      final responseData = json.decode(newResponse.body);
+      final responseText = utf8decoder.convert(responseData['text'].codeUnits);
+      print(responseData);
+      return responseText;
     } catch (error) {
       log("error $error");
       rethrow;

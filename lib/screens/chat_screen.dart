@@ -33,8 +33,6 @@ class _ChatScreenState extends State<ChatScreen> {
   late FocusNode focusNode;
   late SpeechToText speechToText;
 
-  // List<ChatModel> chatList = [];
-
   @override
   void initState() {
     _listScrollController = ScrollController();
@@ -82,8 +80,8 @@ class _ChatScreenState extends State<ChatScreen> {
       String msg = textEditingController.text;
       setState(() {
         _isTyping = true;
-        // chatList.add(ChatModel(msg: msg, chatIndex: 0));
-        chatProvider.addUserMessage(msg: msg);
+        chatProvider.addUserMessage(
+            msg: msg, chatList: chatProvider.getChatList);
         textEditingController.clear();
         focusNode.unfocus();
       });
@@ -91,10 +89,6 @@ class _ChatScreenState extends State<ChatScreen> {
         msg: msg,
         chosenModelId: modelsProvider.getCurrentModel,
       );
-      // chatList.addAll(await ApiService.sendMessage(
-      //   message: msg,
-      //   modelId: modelsProvider.getCurrentModel,
-      // ));
       setState(() {});
 
       Future.delayed(Duration(milliseconds: 500), () {

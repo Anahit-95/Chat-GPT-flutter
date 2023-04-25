@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:developer';
 
 import 'package:file_picker/file_picker.dart';
@@ -14,7 +15,12 @@ import '../widgets/chat_widget.dart';
 import '../widgets/text_widget.dart';
 
 class AudioToText extends StatefulWidget {
-  const AudioToText({super.key});
+  final String title;
+
+  const AudioToText({
+    Key? key,
+    required this.title,
+  }) : super(key: key);
 
   @override
   State<AudioToText> createState() => _AudioToTextState();
@@ -52,15 +58,35 @@ class _AudioToTextState extends State<AudioToText> {
       if (result != null) {
         setState(() {
           _isTyping = true;
-          chatProvider.addUserMessage(msg: result.files.single.name);
+          chatProvider.addUserMessage(
+            msg: result.files.single.name,
+            chatList: widget.title == 'Audio Reader'
+                ? chatProvider.getAudioChatList
+                : chatProvider.getTranslatedChatList,
+          );
         });
         // print(result.files.single.name);
-        await ApiService.convertSpeechToText(result.files.single.path!)
-            .then((value) {
-          setState(() {
-            chatProvider.addBotMessage(msg: value);
+        if (widget.title == 'Audio Reader') {
+          await ApiService.convertSpeechToText(result.files.single.path!)
+              .then((value) {
+            setState(() {
+              chatProvider.addBotMessage(
+                msg: value,
+                chatList: chatProvider.getAudioChatList,
+              );
+            });
           });
-        });
+        } else {
+          await ApiService.translateSpeechToEnglish(result.files.single.path!)
+              .then((value) {
+            setState(() {
+              chatProvider.addBotMessage(
+                msg: value,
+                chatList: chatProvider.getTranslatedChatList,
+              );
+            });
+          });
+        }
       }
     } catch (error) {
       log("error $error");
@@ -83,10 +109,13 @@ class _AudioToTextState extends State<AudioToText> {
   @override
   Widget build(BuildContext context) {
     final chatProvider = Provider.of<ChatProvider>(context);
+    var chatList = widget.title == 'Audio Reader'
+        ? chatProvider.getAudioChatList
+        : chatProvider.getTranslatedChatList;
     return Scaffold(
       appBar: AppBar(
         elevation: 2,
-        title: Text('Audio to text'),
+        title: Text(widget.title),
         leading: GestureDetector(
           onTap: () => Navigator.of(context).pushNamed('/'),
           child: Padding(
@@ -103,12 +132,12 @@ class _AudioToTextState extends State<AudioToText> {
             Flexible(
               child: ListView.builder(
                 controller: _listScrollController,
-                itemCount: chatProvider.getChatList.length,
+                itemCount: chatList.length,
                 itemBuilder: (context, index) {
                   return ChatWidget(
-                    msg: chatProvider.getChatList[index].msg,
-                    chatIndex: chatProvider.getChatList[index].chatIndex,
-                    shouldAnimate: chatProvider.getChatList.length - 1 == index,
+                    msg: chatList[index].msg,
+                    chatIndex: chatList[index].chatIndex,
+                    shouldAnimate: chatList.length - 1 == index,
                   );
                 },
               ),

@@ -43,7 +43,7 @@ class ChatWidget extends StatelessWidget {
                         )
                       : shouldAnimate
                           ? DefaultTextStyle(
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 16,
@@ -60,7 +60,7 @@ class ChatWidget extends StatelessWidget {
                             )
                           : Text(
                               msg.trim(),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 16,

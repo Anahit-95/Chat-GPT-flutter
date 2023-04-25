@@ -1,7 +1,7 @@
-import 'package:chat_gpt_api/providers/chats_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../providers/chats_provider.dart';
 import './providers/models_provider.dart';
 import './constants/constants.dart';
 import './screens/chat_screen.dart';
@@ -33,10 +33,12 @@ class MyApp extends StatelessWidget {
         title: 'Flutter Demo',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
-            scaffoldBackgroundColor: scaffoldBackgroundColor,
-            appBarTheme: AppBarTheme(
-              color: cardColor,
-            )),
+          scaffoldBackgroundColor: scaffoldBackgroundColor,
+          appBarTheme: AppBarTheme(
+            color: cardColor,
+          ),
+        ),
+
         // home: const ChatScreen(),
         home: HomePage(),
       ),
