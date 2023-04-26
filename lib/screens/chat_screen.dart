@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:developer';
 
 import 'package:avatar_glow/avatar_glow.dart';
@@ -6,19 +7,27 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:provider/provider.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
+import 'package:chat_gpt_api/models/chat_model.dart';
+
 import '../constants/constants.dart';
+import '../models/bot_model.dart';
 import '../providers/chats_provider.dart';
 import '../providers/models_provider.dart';
-
 import '../services/assets_manager.dart';
 import '../services/services.dart';
 import '../services/text_to_speach.dart';
 import '../widgets/chat_widget.dart';
 import '../widgets/text_widget.dart';
-import './audio_screen.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  final Bot bot;
+  final List<ChatModel> chatList;
+
+  const ChatScreen({
+    Key? key,
+    required this.bot,
+    required this.chatList,
+  }) : super(key: key);
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -39,6 +48,7 @@ class _ChatScreenState extends State<ChatScreen> {
     textEditingController = TextEditingController();
     focusNode = FocusNode();
     speechToText = SpeechToText();
+
     super.initState();
   }
 
@@ -56,7 +66,7 @@ class _ChatScreenState extends State<ChatScreen> {
       required ChatProvider chatProvider}) async {
     if (_isTyping) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: TextWidget(
             label: 'You cant send multiple messages at a time.',
           ),
@@ -67,7 +77,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
     if (textEditingController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: TextWidget(
             label: 'Please type a message.',
           ),
@@ -81,19 +91,22 @@ class _ChatScreenState extends State<ChatScreen> {
       setState(() {
         _isTyping = true;
         chatProvider.addUserMessage(
-            msg: msg, chatList: chatProvider.getChatList);
+          msg: msg,
+          chatList: widget.chatList,
+        );
         textEditingController.clear();
         focusNode.unfocus();
       });
       await chatProvider.sendMessageAndGetAnswers(
         msg: msg,
         chosenModelId: modelsProvider.getCurrentModel,
+        systemMessage: widget.bot.systemMessage,
+        chatList: widget.chatList,
       );
       setState(() {});
 
       Future.delayed(Duration(milliseconds: 500), () {
-        TextToSpeech.speak(
-            chatProvider.getChatList[chatProvider.getChatList.length - 1].msg);
+        TextToSpeech.speak(widget.chatList[widget.chatList.length - 1].msg);
       });
     } catch (error) {
       log("error $error");
@@ -125,10 +138,13 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     final modelsProvider = Provider.of<ModelsProvider>(context);
     final chatProvider = Provider.of<ChatProvider>(context);
+    // var chatList = widget.bot.botType == ChatBotType.simpleBot
+    //     ? chatProvider.getChatList
+    //     : chatProvider.getSarcasticChatList;
     return Scaffold(
       appBar: AppBar(
         elevation: 2,
-        title: const Text('ChatGPT'),
+        title: Text(widget.bot.title),
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
           child: GestureDetector(
@@ -156,12 +172,12 @@ class _ChatScreenState extends State<ChatScreen> {
             Flexible(
               child: ListView.builder(
                 controller: _listScrollController,
-                itemCount: chatProvider.getChatList.length,
+                itemCount: widget.chatList.length,
                 itemBuilder: (context, index) {
                   return ChatWidget(
-                    msg: chatProvider.getChatList[index].msg,
-                    chatIndex: chatProvider.getChatList[index].chatIndex,
-                    shouldAnimate: chatProvider.getChatList.length - 1 == index,
+                    msg: widget.chatList[index].msg,
+                    chatIndex: widget.chatList[index].chatIndex,
+                    shouldAnimate: widget.chatList.length - 1 == index,
                   );
                 },
               ),

@@ -1,43 +1,66 @@
 import 'package:chat_gpt_api/screens/chat_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../models/bot_model.dart';
+import '../providers/chats_provider.dart';
 import '../screens/audio_screen.dart';
 
 class BotWidget extends StatelessWidget {
-  final String title;
-  final IconData iconData;
-  final Color color;
+  final Bot bot;
 
-  BotWidget({
-    required this.title,
-    required this.iconData,
-    required this.color,
+  const BotWidget({
+    super.key,
+    required this.bot,
   });
 
   @override
   Widget build(BuildContext context) {
+    final chatProvider = Provider.of<ChatProvider>(context);
     return GestureDetector(
       onTap: () {
-        switch (title) {
+        switch (bot.title) {
           case 'Simple Bot':
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => ChatScreen()),
+              MaterialPageRoute(
+                builder: (context) => ChatScreen(
+                  bot: bot,
+                  chatList: chatProvider.getChatList,
+                ),
+              ),
+            );
+            break;
+          case 'Sarcastic Bot':
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ChatScreen(
+                  bot: bot,
+                  chatList: chatProvider.getSarcasticChatList,
+                ),
+              ),
             );
             break;
           case 'Audio Reader':
             Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => AudioToText(title: title)),
+                builder: (context) => AudioToText(
+                  bot: bot,
+                  chatList: chatProvider.getAudioChatList,
+                ),
+              ),
             );
             break;
           case 'Audio Translater':
             Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => AudioToText(title: title)),
+                  builder: (context) => AudioToText(
+                        bot: bot,
+                        chatList: chatProvider.getTranslatedChatList,
+                      )),
             );
             break;
           default:
@@ -49,19 +72,19 @@ class BotWidget extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        color: color,
+        color: bot.color,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Icon(
-              iconData,
+              bot.iconData,
               size: 25,
               color: Colors.white,
             ),
             SizedBox(width: 8),
             Text(
-              title,
+              bot.title,
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 16,

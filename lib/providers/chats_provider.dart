@@ -5,11 +5,16 @@ import '../services/api_services.dart';
 
 class ChatProvider with ChangeNotifier {
   List<ChatModel> _chatList = [];
+  List<ChatModel> _sarcasticChatList = [];
   List<ChatModel> _audioChatList = [];
   List<ChatModel> _translatedChatList = [];
 
   List<ChatModel> get getChatList {
     return _chatList;
+  }
+
+  List<ChatModel> get getSarcasticChatList {
+    return _sarcasticChatList;
   }
 
   List<ChatModel> get getAudioChatList {
@@ -31,15 +36,41 @@ class ChatProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> sendMessageAndGetAnswers(
-      {required String msg, required String chosenModelId}) async {
+  Future<void> sendMessageAndGetAnswers({
+    required String msg,
+    required String chosenModelId,
+    required List<ChatModel> chatList,
+    String? systemMessage,
+  }) async {
     if (chosenModelId.toLowerCase().startsWith('gpt')) {
-      _chatList.addAll(await ApiService.sendMessageGPT(
+      List<Map<String, String>> messages = [];
+
+      for (var i = 0; i < chatList.length; i++) {
+        switch (chatList[i].chatIndex) {
+          case 0:
+            messages.add({
+              'role': 'user',
+              'content': chatList[i].msg,
+            });
+            break;
+          case 1:
+            messages.add({
+              'role': 'assistant',
+              'content': chatList[i].msg,
+            });
+            break;
+        }
+      }
+
+      ApiService.messages = messages;
+
+      chatList.addAll(await ApiService.sendMessageGPT(
         message: msg,
         modelId: chosenModelId,
+        systemMessage: systemMessage!,
       ));
     } else {
-      _chatList.addAll(await ApiService.sendMessage(
+      chatList.addAll(await ApiService.sendMessage(
         message: msg,
         modelId: chosenModelId,
       ));

@@ -33,7 +33,7 @@ class ApiService {
     }
   }
 
-  // Send Message fct
+  // Send Message completion
 
   static Future<List<ChatModel>> sendMessage(
       {required String message, required String modelId}) async {
@@ -57,21 +57,21 @@ class ApiService {
       Map jsonResponse = jsonDecode(response.body);
 
       if (jsonResponse['error'] != null) {
-        // print("jsonResponse['error'] ${jsonResponse['error']["message"]}");
         throw HttpException(jsonResponse['error']["message"]);
       }
 
       List<ChatModel> chatList = [];
 
       if (jsonResponse["choices"].length > 0) {
-        // log("jsonResponse[choices]text ${jsonResponse["choices"][0]["text"]}");
-        chatList = List.generate(
-          jsonResponse['choices'].length,
-          (index) => ChatModel(
-            msg: jsonResponse["choices"][index]["text"],
+        chatList = List.generate(jsonResponse['choices'].length, (index) {
+          var utf8decoder = Utf8Decoder(allowMalformed: true);
+          String decodedText = utf8decoder
+              .convert(jsonResponse["choices"][index]["text"].codeUnits);
+          return ChatModel(
+            msg: decodedText,
             chatIndex: 1,
-          ),
-        );
+          );
+        });
       }
       return chatList;
     } catch (error) {
@@ -83,7 +83,9 @@ class ApiService {
   // Send Message using ChatGPT API
 
   static Future<List<ChatModel>> sendMessageGPT(
-      {required String message, required String modelId}) async {
+      {required String message,
+      required String modelId,
+      String? systemMessage}) async {
     messages.add({
       'role': 'user',
       'content': message,
@@ -100,7 +102,7 @@ class ApiService {
           {
             "model": modelId,
             "messages": [
-              {"role": "system", "content": "You are a helpfull assistant."},
+              {"role": "system", "content": systemMessage},
               ...messages,
               // {
               //   "role": "user",

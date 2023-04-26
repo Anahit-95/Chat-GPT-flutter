@@ -6,8 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:provider/provider.dart';
 
+import 'package:chat_gpt_api/models/chat_model.dart';
+
 // import 'api_services.dart';
 import '../constants/constants.dart';
+import '../models/bot_model.dart';
 import '../providers/chats_provider.dart';
 import '../services/api_services.dart';
 import '../services/assets_manager.dart';
@@ -15,11 +18,14 @@ import '../widgets/chat_widget.dart';
 import '../widgets/text_widget.dart';
 
 class AudioToText extends StatefulWidget {
-  final String title;
+  // final String title;
+  final Bot bot;
+  final List<ChatModel> chatList;
 
   const AudioToText({
     Key? key,
-    required this.title,
+    required this.bot,
+    required this.chatList,
   }) : super(key: key);
 
   @override
@@ -29,7 +35,6 @@ class AudioToText extends StatefulWidget {
 class _AudioToTextState extends State<AudioToText> {
   late ScrollController _listScrollController;
   bool _isTyping = false;
-  var text = '';
 
   @override
   void initState() {
@@ -60,13 +65,11 @@ class _AudioToTextState extends State<AudioToText> {
           _isTyping = true;
           chatProvider.addUserMessage(
             msg: result.files.single.name,
-            chatList: widget.title == 'Audio Reader'
-                ? chatProvider.getAudioChatList
-                : chatProvider.getTranslatedChatList,
+            chatList: widget.chatList,
           );
         });
         // print(result.files.single.name);
-        if (widget.title == 'Audio Reader') {
+        if (widget.bot.title == 'Audio Reader') {
           await ApiService.convertSpeechToText(result.files.single.path!)
               .then((value) {
             setState(() {
@@ -109,13 +112,11 @@ class _AudioToTextState extends State<AudioToText> {
   @override
   Widget build(BuildContext context) {
     final chatProvider = Provider.of<ChatProvider>(context);
-    var chatList = widget.title == 'Audio Reader'
-        ? chatProvider.getAudioChatList
-        : chatProvider.getTranslatedChatList;
+
     return Scaffold(
       appBar: AppBar(
         elevation: 2,
-        title: Text(widget.title),
+        title: Text(widget.bot.title),
         leading: GestureDetector(
           onTap: () => Navigator.of(context).pushNamed('/'),
           child: Padding(
@@ -132,12 +133,12 @@ class _AudioToTextState extends State<AudioToText> {
             Flexible(
               child: ListView.builder(
                 controller: _listScrollController,
-                itemCount: chatList.length,
+                itemCount: widget.chatList.length,
                 itemBuilder: (context, index) {
                   return ChatWidget(
-                    msg: chatList[index].msg,
-                    chatIndex: chatList[index].chatIndex,
-                    shouldAnimate: chatList.length - 1 == index,
+                    msg: widget.chatList[index].msg,
+                    chatIndex: widget.chatList[index].chatIndex,
+                    shouldAnimate: widget.chatList.length - 1 == index,
                   );
                 },
               ),

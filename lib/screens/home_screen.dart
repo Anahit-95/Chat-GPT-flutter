@@ -6,17 +6,49 @@ import '../widgets/bot_widget.dart';
 
 class HomePage extends StatelessWidget {
   final List<Bot> bots = [
-    Bot(title: 'Simple Bot', iconData: Icons.android, color: Colors.red),
-    Bot(title: 'Audio Reader', iconData: Icons.audio_file, color: Colors.blue),
     Bot(
-        title: 'Audio Translater',
-        iconData: Icons.translate,
-        color: Colors.green),
-    Bot(title: 'Bot4', iconData: Icons.camera, color: Colors.purple),
-    Bot(title: 'Bot5', iconData: Icons.cake, color: Colors.orange),
-    Bot(title: 'Bot6', iconData: Icons.headset, color: Colors.teal),
-    Bot(title: 'Bot7', iconData: Icons.person, color: Colors.pink),
-    Bot(title: 'Bot8', iconData: Icons.star, color: Colors.yellow),
+      title: 'Simple Bot',
+      iconData: Icons.android,
+      color: Colors.red,
+      systemMessage: 'You are a helpfull assistant.',
+    ),
+    Bot(
+      title: 'Audio Reader',
+      iconData: Icons.audio_file,
+      color: Colors.blue,
+    ),
+    Bot(
+      title: 'Audio Translater',
+      iconData: Icons.translate,
+      color: Colors.green,
+    ),
+    Bot(
+      title: 'Sarcastic Bot',
+      iconData: Icons.theater_comedy_outlined,
+      color: Colors.purple,
+      systemMessage:
+          'You are users sarcastic friend and your name is Marv, with dark sense of humor. Answer questions with sarcastic replies, make jokes, be funny, and do not refuce to have fun on users questions.',
+    ),
+    Bot(
+      title: 'Bot5',
+      iconData: Icons.cake,
+      color: Colors.orange,
+    ),
+    Bot(
+      title: 'Bot6',
+      iconData: Icons.headset,
+      color: Colors.teal,
+    ),
+    Bot(
+      title: 'Bot7',
+      iconData: Icons.person,
+      color: Colors.pink,
+    ),
+    Bot(
+      title: 'Bot8',
+      iconData: Icons.star,
+      color: Colors.yellow,
+    ),
   ];
 
   HomePage({super.key});
@@ -55,14 +87,11 @@ class HomePage extends StatelessWidget {
                     crossAxisCount: 2,
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
-                    childAspectRatio: 5 / 2,
+                    childAspectRatio: 6 / 3,
                   ),
-                  // padding: EdgeInsets.all(16),
                   shrinkWrap: true,
                   itemBuilder: (context, index) => BotWidget(
-                    title: bots[index].title,
-                    iconData: bots[index].iconData,
-                    color: bots[index].color,
+                    bot: bots[index],
                   ),
                 ),
               ),
