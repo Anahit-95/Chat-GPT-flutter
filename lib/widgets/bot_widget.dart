@@ -1,4 +1,5 @@
 import 'package:chat_gpt_api/screens/chat_screen.dart';
+import 'package:chat_gpt_api/screens/image_generator_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -16,81 +17,78 @@ class BotWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final chatProvider = Provider.of<ChatProvider>(context);
     return GestureDetector(
       onTap: () {
         switch (bot.title) {
           case 'Simple Bot':
+          case 'Sarcasmator':
+          case 'Interviewer':
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ChatScreen(
-                  bot: bot,
-                  chatList: chatProvider.getChatList,
-                ),
-              ),
-            );
-            break;
-          case 'Sarcastic Bot':
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ChatScreen(
-                  bot: bot,
-                  chatList: chatProvider.getSarcasticChatList,
+                builder: (context) => ChangeNotifierProvider(
+                  create: (context) => ChatProvider(bot: bot),
+                  child: const ChatScreen(),
                 ),
               ),
             );
             break;
           case 'Audio Reader':
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => AudioToText(
-                  bot: bot,
-                  chatList: chatProvider.getAudioChatList,
-                ),
-              ),
-            );
-            break;
           case 'Audio Translater':
             Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => AudioToText(
-                        bot: bot,
-                        chatList: chatProvider.getTranslatedChatList,
-                      )),
+                builder: (context) => ChangeNotifierProvider(
+                  create: (context) => ChatProvider(bot: bot),
+                  child: const AudioToText(),
+                ),
+              ),
+            );
+            break;
+          case 'Image Generator':
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ImageGeneratorScreen(),
+              ),
             );
             break;
           default:
             Navigator.of(context).pushReplacementNamed('/');
         }
       },
-      child: Card(
+      child: Material(
         elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        color: bot.color,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Icon(
-              bot.iconData,
-              size: 25,
-              color: Colors.white,
-            ),
-            SizedBox(width: 8),
-            Text(
-              bot.title,
-              style: TextStyle(
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: bot.color,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(
+                bot.iconData,
+                size: 25,
                 color: Colors.white,
-                fontSize: 16,
               ),
-            ),
-          ],
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  bot.title,
+                  softWrap: true,
+                  // textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -193,4 +193,27 @@ class ApiService {
       rethrow;
     }
   }
+
+  static generateImage(String text, String size) async {
+    var response = await http.post(
+      Uri.parse('$BASE_URL/images/generations'),
+      headers: {
+        'Authorization': 'Bearer $API_KEY',
+        "Content-Type": "application/json"
+      },
+      body: jsonEncode(
+        {
+          "prompt": text,
+          "n": 1,
+          "size": size,
+        },
+      ),
+    );
+    if (response.statusCode == 200) {
+      var data = jsonDecode(response.body.toString());
+      return data['data'][0]['url'].toString();
+    } else {
+      print('Failed to fetch image');
+    }
+  }
 }

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../providers/chats_provider.dart';
+import './providers/bots_provider.dart';
+import './providers/chats_provider.dart';
 import './providers/models_provider.dart';
 import './constants/constants.dart';
-import './screens/chat_screen.dart';
 import './services/text_to_speach.dart';
-import 'screens/home_screen.dart';
+import './screens/home_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,11 +23,14 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (_) => ModelsProvider(),
+          create: (_) => BotsProvider(),
         ),
         ChangeNotifierProvider(
-          create: (_) => ChatProvider(),
+          create: (_) => ModelsProvider(),
         ),
+        // ChangeNotifierProvider(
+        //   create: (_) => ChatProvider(),
+        // ),
       ],
       child: MaterialApp(
         title: 'Flutter Demo',
@@ -38,9 +41,7 @@ class MyApp extends StatelessWidget {
             color: cardColor,
           ),
         ),
-
-        // home: const ChatScreen(),
-        home: HomePage(),
+        home: const HomePage(),
       ),
     );
   }

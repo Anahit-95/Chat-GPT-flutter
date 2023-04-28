@@ -1,16 +1,11 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:developer';
 
-import 'package:avatar_glow/avatar_glow.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:provider/provider.dart';
+import 'package:avatar_glow/avatar_glow.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
-import 'package:chat_gpt_api/models/chat_model.dart';
-
-import '../constants/constants.dart';
-import '../models/bot_model.dart';
 import '../providers/chats_provider.dart';
 import '../providers/models_provider.dart';
 import '../services/assets_manager.dart';
@@ -18,16 +13,10 @@ import '../services/services.dart';
 import '../services/text_to_speach.dart';
 import '../widgets/chat_widget.dart';
 import '../widgets/text_widget.dart';
+import '../constants/constants.dart';
 
 class ChatScreen extends StatefulWidget {
-  final Bot bot;
-  final List<ChatModel> chatList;
-
-  const ChatScreen({
-    Key? key,
-    required this.bot,
-    required this.chatList,
-  }) : super(key: key);
+  const ChatScreen({super.key});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -36,6 +25,7 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   bool _isTyping = false;
   bool _isListening = false;
+  bool _isSpeaking = false;
 
   late TextEditingController textEditingController;
   late ScrollController _listScrollController;
@@ -92,7 +82,6 @@ class _ChatScreenState extends State<ChatScreen> {
         _isTyping = true;
         chatProvider.addUserMessage(
           msg: msg,
-          chatList: widget.chatList,
         );
         textEditingController.clear();
         focusNode.unfocus();
@@ -100,13 +89,15 @@ class _ChatScreenState extends State<ChatScreen> {
       await chatProvider.sendMessageAndGetAnswers(
         msg: msg,
         chosenModelId: modelsProvider.getCurrentModel,
-        systemMessage: widget.bot.systemMessage,
-        chatList: widget.chatList,
+        systemMessage: chatProvider.bot.systemMessage,
       );
-      setState(() {});
+      setState(() {
+        _isSpeaking = true;
+      });
 
-      Future.delayed(Duration(milliseconds: 500), () {
-        TextToSpeech.speak(widget.chatList[widget.chatList.length - 1].msg);
+      Future.delayed(const Duration(milliseconds: 500), () {
+        TextToSpeech.speak(chatProvider
+            .bot.chatList[chatProvider.bot.chatList.length - 1].msg);
       });
     } catch (error) {
       log("error $error");
@@ -138,13 +129,10 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     final modelsProvider = Provider.of<ModelsProvider>(context);
     final chatProvider = Provider.of<ChatProvider>(context);
-    // var chatList = widget.bot.botType == ChatBotType.simpleBot
-    //     ? chatProvider.getChatList
-    //     : chatProvider.getSarcasticChatList;
     return Scaffold(
       appBar: AppBar(
         elevation: 2,
-        title: Text(widget.bot.title),
+        title: Text(chatProvider.bot.title),
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
           child: GestureDetector(
@@ -172,12 +160,13 @@ class _ChatScreenState extends State<ChatScreen> {
             Flexible(
               child: ListView.builder(
                 controller: _listScrollController,
-                itemCount: widget.chatList.length,
+                itemCount: chatProvider.bot.chatList.length,
                 itemBuilder: (context, index) {
                   return ChatWidget(
-                    msg: widget.chatList[index].msg,
-                    chatIndex: widget.chatList[index].chatIndex,
-                    shouldAnimate: widget.chatList.length - 1 == index,
+                    msg: chatProvider.bot.chatList[index].msg,
+                    chatIndex: chatProvider.bot.chatList[index].chatIndex,
+                    shouldAnimate:
+                        chatProvider.bot.chatList.length - 1 == index,
                   );
                 },
               ),
@@ -269,10 +258,10 @@ class _ChatScreenState extends State<ChatScreen> {
           ? AvatarGlow(
               endRadius: 75.0,
               animate: _isListening,
-              duration: Duration(milliseconds: 2000),
+              duration: const Duration(milliseconds: 2000),
               glowColor: Colors.white,
               repeat: true,
-              repeatPauseDuration: Duration(milliseconds: 100),
+              repeatPauseDuration: const Duration(milliseconds: 100),
               showTwoGlows: true,
               child: GestureDetector(
                 onTap: () async {
@@ -284,7 +273,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 child: CircleAvatar(
                   radius: 35,
                   backgroundColor: scaffoldBackgroundColor,
-                  child: Icon(
+                  child: const Icon(
                     Icons.mic,
                     color: Colors.deepOrange,
                     size: 30,

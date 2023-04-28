@@ -1,32 +1,19 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:developer';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:provider/provider.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
-import 'package:chat_gpt_api/models/chat_model.dart';
-
-// import 'api_services.dart';
-import '../constants/constants.dart';
-import '../models/bot_model.dart';
 import '../providers/chats_provider.dart';
 import '../services/api_services.dart';
 import '../services/assets_manager.dart';
 import '../widgets/chat_widget.dart';
 import '../widgets/text_widget.dart';
+import '../constants/constants.dart';
 
 class AudioToText extends StatefulWidget {
-  // final String title;
-  final Bot bot;
-  final List<ChatModel> chatList;
-
-  const AudioToText({
-    Key? key,
-    required this.bot,
-    required this.chatList,
-  }) : super(key: key);
+  const AudioToText({super.key});
 
   @override
   State<AudioToText> createState() => _AudioToTextState();
@@ -65,17 +52,14 @@ class _AudioToTextState extends State<AudioToText> {
           _isTyping = true;
           chatProvider.addUserMessage(
             msg: result.files.single.name,
-            chatList: widget.chatList,
           );
         });
-        // print(result.files.single.name);
-        if (widget.bot.title == 'Audio Reader') {
+        if (chatProvider.bot.title == 'Audio Reader') {
           await ApiService.convertSpeechToText(result.files.single.path!)
               .then((value) {
             setState(() {
               chatProvider.addBotMessage(
                 msg: value,
-                chatList: chatProvider.getAudioChatList,
               );
             });
           });
@@ -85,7 +69,6 @@ class _AudioToTextState extends State<AudioToText> {
             setState(() {
               chatProvider.addBotMessage(
                 msg: value,
-                chatList: chatProvider.getTranslatedChatList,
               );
             });
           });
@@ -116,7 +99,7 @@ class _AudioToTextState extends State<AudioToText> {
     return Scaffold(
       appBar: AppBar(
         elevation: 2,
-        title: Text(widget.bot.title),
+        title: Text(chatProvider.bot.title),
         leading: GestureDetector(
           onTap: () => Navigator.of(context).pushNamed('/'),
           child: Padding(
@@ -133,12 +116,13 @@ class _AudioToTextState extends State<AudioToText> {
             Flexible(
               child: ListView.builder(
                 controller: _listScrollController,
-                itemCount: widget.chatList.length,
+                itemCount: chatProvider.bot.chatList.length,
                 itemBuilder: (context, index) {
                   return ChatWidget(
-                    msg: widget.chatList[index].msg,
-                    chatIndex: widget.chatList[index].chatIndex,
-                    shouldAnimate: widget.chatList.length - 1 == index,
+                    msg: chatProvider.bot.chatList[index].msg,
+                    chatIndex: chatProvider.bot.chatList[index].chatIndex,
+                    shouldAnimate:
+                        chatProvider.bot.chatList.length - 1 == index,
                   );
                 },
               ),
