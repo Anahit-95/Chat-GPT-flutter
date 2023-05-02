@@ -23,6 +23,7 @@ class BotWidget extends StatelessWidget {
           case 'Simple Bot':
           case 'Sarcasmator':
           case 'Interviewer':
+          case 'Essay writer':
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -49,7 +50,7 @@ class BotWidget extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ImageGeneratorScreen(),
+                builder: (context) => const ImageGeneratorScreen(),
               ),
             );
             break;

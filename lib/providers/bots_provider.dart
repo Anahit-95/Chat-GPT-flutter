@@ -19,7 +19,7 @@ class BotsProvider with ChangeNotifier {
       chatList: [
         ChatModel(
           msg:
-              "Hi, send me the audio file, and I'll detext the spoken text, regardless of the language being spoken.",
+              "Hi, send me the audio file, and I'll detext the spoken text, from any language.",
           chatIndex: 1,
         ),
       ],
@@ -53,8 +53,10 @@ class BotsProvider with ChangeNotifier {
       chatList: [],
     ),
     Bot(
-      title: 'Bot6',
-      iconData: Icons.headset,
+      title: 'Essay writer',
+      iconData: Icons.edit_document,
+      systemMessage:
+          'Write an essay about given topic or title. If the topic is scientific prepare essay in scientific style, if not make assay in artistic and literary style. Also pay attention on users prefferances in what literature or authors style he/she wants the essay. If user does not mention size, write about 2 A4 format pages size essay.',
       color: Colors.teal,
       chatList: [],
     ),

@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'dart:developer';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:screenshot/screenshot.dart';
@@ -9,6 +11,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../constants/constants.dart';
 import '../services/api_services.dart';
+import '../widgets/text_widget.dart';
 
 class ImageGeneratorScreen extends StatefulWidget {
   const ImageGeneratorScreen({super.key});
@@ -18,33 +21,54 @@ class ImageGeneratorScreen extends StatefulWidget {
 }
 
 class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
-  ScreenshotController screenshotController = ScreenshotController();
-
-  var sizes = ['Small', 'Medium', 'Large'];
-  var values = ['256x256', '512x512', '1024x1024'];
+  List<String> sizes = ['Small', 'Medium', 'Large'];
+  List<String> values = ['256x256', '512x512', '1024x1024'];
   String? dropValue;
-  var textController = TextEditingController();
   String image = '';
-  var isLoaded = false;
+  bool isLoaded = false;
 
-  shareImage() async {
+  ScreenshotController screenshotController = ScreenshotController();
+  late TextEditingController textController;
+
+  @override
+  void initState() {
+    textController = TextEditingController();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    textController.dispose();
+    super.dispose();
+  }
+
+  Future<void> shareImage() async {
     await screenshotController
-        .capture(delay: Duration(milliseconds: 100), pixelRatio: 1.0)
+        .capture(delay: const Duration(milliseconds: 100), pixelRatio: 1.0)
         .then((Uint8List? img) async {
       if (img != null) {
         final directory = (await getApplicationDocumentsDirectory()).path;
-        final filename = "share.png";
-        final imgPath = await File('${directory}/$filename').create();
+        const filename = "share.png";
+        final imgPath = await File('$directory/$filename').create();
         await imgPath.writeAsBytes(img);
 
-        Share.shareFiles([imgPath.path], text: 'AI generated Image');
+        final xFile = XFile(imgPath.path);
+        await Share.shareXFiles([xFile], text: 'AI generated Image');
       } else {
-        print('Failed to take a screenshot');
+        log('Failed to take a screenshot');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: TextWidget(
+              label: 'Failed to take a screenshot.',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     });
   }
 
-  downloadImg() async {
+  Future<void> downloadImg() async {
     var result = await Permission.storage.request();
     if (result.isGranted) {
       const foldername = 'AI Image';
@@ -59,7 +83,6 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
           fileName: filename,
           pixelRatio: 1.0,
         );
-
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -87,9 +110,10 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Permission denied',
+          content: TextWidget(
+            label: 'Permission denied',
           ),
+          backgroundColor: Colors.red,
         ),
       );
     }
@@ -106,7 +130,7 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(12.0),
         child: Column(
           children: [
             Expanded(
@@ -117,10 +141,10 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
                     children: [
                       Expanded(
                         child: Container(
-                          height: 44,
+                          height: 46,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
-                            vertical: 4,
+                            vertical: 2,
                           ),
                           decoration: BoxDecoration(
                             color: Colors.white,
@@ -129,7 +153,7 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
                           child: TextFormField(
                             controller: textController,
                             decoration: const InputDecoration(
-                              hintText: "eg 'A monkey on moon' ",
+                              hintText: "Describe your image",
                               border: InputBorder.none,
                             ),
                           ),
@@ -137,7 +161,7 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
                       ),
                       const SizedBox(width: 12),
                       Container(
-                        height: 44,
+                        height: 46,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
                           vertical: 2,
@@ -195,9 +219,10 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text(
-                                'Please pass the querry and size',
+                              content: TextWidget(
+                                label: 'Please pass the querry and size.',
                               ),
+                              backgroundColor: Colors.red,
                             ),
                           );
                         }
@@ -209,8 +234,8 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
               ),
             ),
             Expanded(
-              flex: 4,
-              child: isLoaded
+              flex: 3,
+              child: isLoaded && image.isNotEmpty
                   ? Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -255,9 +280,9 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
                                 backgroundColor: btnColor,
                               ),
                               onPressed: () async {
-                                await shareImage();
+                                shareImage();
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
+                                  const SnackBar(
                                     content: Text('Image shared'),
                                   ),
                                 );
@@ -268,25 +293,51 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
                         )
                       ],
                     )
-                  : Container(
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        color: Colors.white,
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          CircularProgressIndicator(color: btnColor),
-                          SizedBox(height: 12),
-                          Text(
-                            "Waiting for image to be generated...",
-                            style: TextStyle(fontSize: 16.0),
+                  : !isLoaded && textController.text.isNotEmpty
+                      ? Container(
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            color: cardColor,
                           ),
-                        ],
-                      ),
-                    ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              SpinKitSpinningLines(
+                                color: btnColor,
+                                size: 50,
+                              ),
+                              SizedBox(height: 12),
+                              Text(
+                                "Waiting for image to be generated...",
+                                style: TextStyle(
+                                    fontSize: 16.0, color: Colors.white),
+                              ),
+                            ],
+                          ),
+                        )
+                      : Container(
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            color: cardColor,
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              SizedBox(height: 12),
+                              Text(
+                                "Your image will be displayed here.",
+                                style: TextStyle(
+                                  fontSize: 16.0,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
             ),
+            SizedBox(height: 40),
           ],
         ),
       ),
