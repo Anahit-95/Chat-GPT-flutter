@@ -7,31 +7,51 @@ import '../constants/constants.dart';
 import '../services/text_to_speach.dart';
 import './text_widget.dart';
 
-class ChatWidget extends StatelessWidget {
-  const ChatWidget({
+class ChatWidget extends StatefulWidget {
+  ChatWidget({
     super.key,
     required this.msg,
     required this.chatIndex,
     this.shouldAnimate = false,
+    this.lastMessageSpeaking = false,
   });
 
   final String msg;
   final int chatIndex;
   final bool shouldAnimate;
+  bool lastMessageSpeaking;
+
+  @override
+  State<ChatWidget> createState() => _ChatWidgetState();
+}
+
+class _ChatWidgetState extends State<ChatWidget> {
+  bool _isSpeaking = false;
+  late TextToSpeech _textToSpeech;
+
+  @override
+  void initState() {
+    super.initState();
+    _textToSpeech = TextToSpeech(onStateChanged: (isSpeaking) {
+      setState(() {
+        _isSpeaking = isSpeaking;
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         Material(
-          color: chatIndex == 0 ? scaffoldBackgroundColor : cardColor,
+          color: widget.chatIndex == 0 ? scaffoldBackgroundColor : cardColor,
           child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Image.asset(
-                  chatIndex == 0
+                  widget.chatIndex == 0
                       ? AssetsManager.userImage
                       : AssetsManager.botImage,
                   height: 30,
@@ -39,13 +59,13 @@ class ChatWidget extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: chatIndex == 0
+                  child: widget.chatIndex == 0
                       ? TextWidget(
-                          label: msg,
+                          label: widget.msg,
                         )
-                      : shouldAnimate
+                      : (widget.shouldAnimate || widget.lastMessageSpeaking)
                           ? DefaultTextStyle(
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 16,
@@ -56,12 +76,12 @@ class ChatWidget extends StatelessWidget {
                                 displayFullTextOnTap: true,
                                 totalRepeatCount: 1,
                                 animatedTexts: [
-                                  TyperAnimatedText(msg.trim()),
+                                  TyperAnimatedText(widget.msg.trim()),
                                 ],
                               ),
                             )
                           : Text(
-                              msg.trim(),
+                              widget.msg.trim(),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w700,
@@ -69,7 +89,7 @@ class ChatWidget extends StatelessWidget {
                               ),
                             ),
                 ),
-                chatIndex == 0
+                widget.chatIndex == 0
                     ? const SizedBox.shrink()
                     : Row(
                         mainAxisAlignment: MainAxisAlignment.end,
@@ -77,14 +97,19 @@ class ChatWidget extends StatelessWidget {
                         children: [
                           InkWell(
                             onTap: () {
-                              if (TextToSpeech.isSpeaking) {
-                                TextToSpeech.stopSpeaking();
+                              if (_textToSpeech.isSpeaking ||
+                                  widget.lastMessageSpeaking) {
+                                print(widget.lastMessageSpeaking);
+                                widget.lastMessageSpeaking = false;
+                                _textToSpeech.stopSpeaking();
                               } else {
-                                TextToSpeech.speak(msg);
+                                _textToSpeech.speak(widget.msg);
                               }
                             },
-                            child: const Icon(
-                              Icons.volume_up_outlined,
+                            child: Icon(
+                              _isSpeaking || widget.lastMessageSpeaking
+                                  ? Icons.volume_up
+                                  : Icons.volume_down_outlined,
                               color: Colors.white,
                             ),
                           ),
@@ -93,7 +118,8 @@ class ChatWidget extends StatelessWidget {
                           ),
                           InkWell(
                             onTap: () {
-                              Clipboard.setData(ClipboardData(text: msg));
+                              Clipboard.setData(
+                                  ClipboardData(text: widget.msg));
                             },
                             child: const Icon(
                               Icons.copy,

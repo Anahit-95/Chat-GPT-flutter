@@ -10,7 +10,7 @@ import './screens/home_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  TextToSpeech.initTTS();
+  // TextToSpeech.initTTS();
   runApp(const MyApp());
 }
 

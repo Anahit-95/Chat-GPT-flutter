@@ -21,9 +21,10 @@ class BotWidget extends StatelessWidget {
       onTap: () {
         switch (bot.title) {
           case 'Simple Bot':
-          case 'Sarcasmator':
+          case 'Ironic companion':
           case 'Interviewer':
           case 'Essay writer':
+          case 'Text Corrector':
             Navigator.push(
               context,
               MaterialPageRoute(

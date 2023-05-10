@@ -141,12 +141,16 @@ class _AudioToTextState extends State<AudioToText> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Choose Audio file to read from',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
+                    Flexible(
+                      child: const Text(
+                        maxLines: 1,
+                        'Choose Audio file to read from hgoiwhegihwoghioweihgohweo...',
+                        style: TextStyle(
+                          color: Colors.white,
+                          overflow: TextOverflow.ellipsis,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
                     ElevatedButton(
@@ -159,6 +163,7 @@ class _AudioToTextState extends State<AudioToText> {
                       child: const Text(
                         ' Pick File ',
                         style: TextStyle(
+                          overflow: TextOverflow.ellipsis,
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
                           fontSize: 15,

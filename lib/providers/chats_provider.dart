@@ -19,6 +19,11 @@ class ChatProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void clearChat() {
+    bot.chatList.clear();
+    notifyListeners();
+  }
+
   Future<void> sendMessageAndGetAnswers({
     required String msg,
     required String chosenModelId,

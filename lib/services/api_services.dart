@@ -20,11 +20,11 @@ class ApiService {
         print("jsonResponse['error'] ${jsonResponse['error']['message']}");
         throw HttpException(jsonResponse['error']['message']);
       }
-      print('jsonResponse $jsonResponse');
+      log('jsonResponse $jsonResponse');
       List temp = [];
       for (var value in jsonResponse['data']) {
         temp.add(value);
-        log('temp ${value['id']}');
+        log('model-name ${value['id']}');
       }
       return ModelsModel.modelsFromSnapshot(temp);
     } catch (error) {
@@ -64,7 +64,7 @@ class ApiService {
 
       if (jsonResponse["choices"].length > 0) {
         chatList = List.generate(jsonResponse['choices'].length, (index) {
-          var utf8decoder = Utf8Decoder(allowMalformed: true);
+          var utf8decoder = const Utf8Decoder(allowMalformed: true);
           String decodedText = utf8decoder
               .convert(jsonResponse["choices"][index]["text"].codeUnits);
           return ChatModel(
@@ -104,10 +104,6 @@ class ApiService {
             "messages": [
               {"role": "system", "content": systemMessage},
               ...messages,
-              // {
-              //   "role": "user",
-              //   "content": message,
-              // }
             ]
           },
         ),
@@ -116,16 +112,14 @@ class ApiService {
       Map jsonResponse = jsonDecode(response.body);
 
       if (jsonResponse['error'] != null) {
-        // print("jsonResponse['error'] ${jsonResponse['error']["message"]}");
         throw HttpException(jsonResponse['error']["message"]);
       }
 
       List<ChatModel> chatList = [];
 
       if (jsonResponse["choices"].length > 0) {
-        // log("jsonResponse[choices]text ${jsonResponse["choices"][0]["text"]}");
         chatList = List.generate(jsonResponse['choices'].length, (index) {
-          var utf8decoder = Utf8Decoder(allowMalformed: true);
+          var utf8decoder = const Utf8Decoder(allowMalformed: true);
           String decodedText = utf8decoder.convert(
               jsonResponse['choices'][index]['message']['content'].codeUnits);
 
@@ -155,12 +149,12 @@ class ApiService {
       // request.fields['language'] = 'ru';
       request.files.add(await http.MultipartFile.fromPath("file", filePath));
 
-      var utf8decoder = Utf8Decoder(allowMalformed: true);
+      var utf8decoder = const Utf8Decoder(allowMalformed: true);
       var response = await request.send();
       var newResponse = await http.Response.fromStream(response);
       final responseData = json.decode(newResponse.body);
       final responseText = utf8decoder.convert(responseData['text'].codeUnits);
-      print(responseData);
+      // print(responseData);
       return responseText;
     } catch (error) {
       log("error $error");
@@ -179,7 +173,7 @@ class ApiService {
       // request.fields['language'] = 'en';
       request.files.add(await http.MultipartFile.fromPath("file", filePath));
 
-      var utf8decoder = Utf8Decoder(allowMalformed: true);
+      var utf8decoder = const Utf8Decoder(allowMalformed: true);
       // String decodedText = utf8decoder.convert(
       //     jsonResponse['choices'][index]['message']['content'].codeUnits);
       var response = await request.send();
@@ -194,26 +188,32 @@ class ApiService {
     }
   }
 
-  static generateImage(String text, String size) async {
-    var response = await http.post(
-      Uri.parse('$BASE_URL/images/generations'),
-      headers: {
-        'Authorization': 'Bearer $API_KEY',
-        "Content-Type": "application/json"
-      },
-      body: jsonEncode(
-        {
-          "prompt": text,
-          "n": 1,
-          "size": size,
+  static Future<String> generateImage(String text, String size) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$BASE_URL/images/generations'),
+        headers: {
+          'Authorization': 'Bearer $API_KEY',
+          "Content-Type": "application/json"
         },
-      ),
-    );
-    if (response.statusCode == 200) {
-      var data = jsonDecode(response.body.toString());
-      return data['data'][0]['url'].toString();
-    } else {
-      print('Failed to fetch image');
+        body: jsonEncode(
+          {
+            "prompt": text,
+            "n": 1,
+            "size": size,
+          },
+        ),
+      );
+      Map jsonResponse = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        String imageUrl = jsonResponse['data'][0]['url'];
+        imageUrl = imageUrl.trim();
+        return imageUrl;
+      } else {
+        throw HttpException(jsonResponse['error']['message']);
+      }
+    } catch (e) {
+      rethrow;
     }
   }
 }

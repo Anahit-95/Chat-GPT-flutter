@@ -32,6 +32,8 @@
 	<string>Speech Recognition is required</string>
 	<key>NSMicrophoneUsageDescription.</key>
 	<string>Microphone is required to record audio</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app requires read and write access to the photo library.</string>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

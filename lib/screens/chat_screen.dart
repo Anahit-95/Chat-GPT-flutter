@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:provider/provider.dart';
 import 'package:avatar_glow/avatar_glow.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -31,15 +32,26 @@ class _ChatScreenState extends State<ChatScreen> {
   late ScrollController _listScrollController;
   late FocusNode focusNode;
   late SpeechToText speechToText;
+  // late TextToSpeech _textToSpeech;
+  late FlutterTts _textToSpeech;
 
   @override
   void initState() {
+    super.initState();
     _listScrollController = ScrollController();
     textEditingController = TextEditingController();
     focusNode = FocusNode();
     speechToText = SpeechToText();
-
-    super.initState();
+    // _textToSpeech = TextToSpeech();
+    _textToSpeech = FlutterTts();
+    // _textToSpeech = TextToSpeech(onStateChanged: (isSpeaking) {
+    //   if (mounted) {
+    //     setState(() {
+    //       _isSpeaking = isSpeaking;
+    //     });
+    //   }
+    // });
+    // TextToSpeech.initTTS();
   }
 
   @override
@@ -48,7 +60,53 @@ class _ChatScreenState extends State<ChatScreen> {
     textEditingController.dispose();
     focusNode.dispose();
     speechToText.cancel();
+    _textToSpeech.stop();
+    // if (_isSpeaking) {
+    //   if (mounted) {
+    //     _isSpeaking = false;
+    //     _textToSpeech?.stopSpeaking();
+    //   }
+    // }
     super.dispose();
+  }
+
+  // Future<void> speak(String text) async {
+  //   await _textToSpeech.speak(text);
+  //   setState(() {
+  //     _isSpeaking = true;
+  //   });
+  // }
+
+  // Future<void> stopSpeaking() async {
+  //   await _textToSpeech.stopSpeaking();
+  //   setState(() {
+  //     _isSpeaking = false;
+  //   });
+  // }
+
+  Future<void> speak(String text) async {
+    _textToSpeech.setStartHandler(() {
+      print('TTS IS STARTED');
+      setState(() {
+        _isSpeaking = true;
+      });
+    });
+
+    _textToSpeech.setCompletionHandler(() {
+      print('Completed');
+      setState(() {
+        _isSpeaking = false;
+      });
+    });
+    _textToSpeech.setErrorHandler((message) {
+      setState(() {
+        _isSpeaking = false;
+      });
+      print(message);
+    });
+
+    await _textToSpeech.awaitSpeakCompletion(true);
+    _textToSpeech.speak(text);
   }
 
   Future<void> sendMessageFCT(
@@ -91,12 +149,16 @@ class _ChatScreenState extends State<ChatScreen> {
         chosenModelId: modelsProvider.getCurrentModel,
         systemMessage: chatProvider.bot.systemMessage,
       );
-      setState(() {
-        _isSpeaking = true;
-      });
+
+      setState(() {});
+
+      // Future.delayed(const Duration(milliseconds: 500), () {
+      //   TextToSpeech.speak(chatProvider
+      //       .bot.chatList[chatProvider.bot.chatList.length - 1].msg);
+      // });
 
       Future.delayed(const Duration(milliseconds: 500), () {
-        TextToSpeech.speak(chatProvider
+        speak(chatProvider
             .bot.chatList[chatProvider.bot.chatList.length - 1].msg);
       });
     } catch (error) {
@@ -152,6 +214,12 @@ class _ChatScreenState extends State<ChatScreen> {
               color: Colors.white,
             ),
           ),
+          IconButton(
+            onPressed: () {
+              chatProvider.clearChat();
+            },
+            icon: const Icon(Icons.delete_outline),
+          ),
         ],
       ),
       body: SafeArea(
@@ -167,6 +235,9 @@ class _ChatScreenState extends State<ChatScreen> {
                     chatIndex: chatProvider.bot.chatList[index].chatIndex,
                     shouldAnimate:
                         chatProvider.bot.chatList.length - 1 == index,
+                    lastMessageSpeaking:
+                        chatProvider.bot.chatList.length - 1 == index &&
+                            _isSpeaking,
                   );
                 },
               ),
