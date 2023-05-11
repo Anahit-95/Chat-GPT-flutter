@@ -5,7 +5,6 @@ import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
-// import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:gallery_saver/gallery_saver.dart';
@@ -30,8 +29,11 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
   List<String> sizes = ['Small', 'Medium', 'Large'];
   List<String> values = ['256x256', '512x512', '1024x1024'];
   String? dropValue;
-  String image = '';
+  String imageUrl =
+      'https://steamuserimages-a.akamaihd.net/ugc/1002558009224554574/9FF0732874DD9F917BD7738FA2548BD4BFD01FED/?imw=512&&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false';
   bool isLoaded = false;
+
+  CroppedFile? croppedFile;
 
   // ScreenshotController screenshotController = ScreenshotController();
   late TextEditingController textController;
@@ -45,32 +47,75 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
   @override
   void dispose() {
     textController.dispose();
+    imageCache.clear();
     super.dispose();
   }
 
-  Future<void> shareImage(String imageUrl) async {
-    try {
-      CachedNetworkImageProvider imageProvider =
-          CachedNetworkImageProvider(imageUrl);
-      imageProvider.resolve(const ImageConfiguration());
-      ImageStream imageStream =
-          imageProvider.resolve(const ImageConfiguration());
-      Completer<Uint8List> completer = Completer();
-      imageStream
-          .addListener(ImageStreamListener((imageInfo, synchronousCall) async {
-        ByteData? byteData =
-            await imageInfo.image.toByteData(format: ImageByteFormat.png);
-        Uint8List pngBytes = byteData!.buffer.asUint8List();
-        completer.complete(pngBytes);
-      }));
-      Uint8List pngBytes = await completer.future;
+  Future<void> getImageUrl() async {
+    if (textController.text.isNotEmpty && dropValue!.isNotEmpty) {
+      setState(() {
+        isLoaded = true;
+        croppedFile = null;
+      });
+      imageCache.clear();
+      try {
+        imageUrl = await ApiService.generateImage(
+          textController.text,
+          dropValue!,
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: TextWidget(
+              label: 'Failed to load image',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      setState(() {
+        isLoaded = false;
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: TextWidget(
+            label: 'Please pass the querry and size.',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
-      final directory = await getTemporaryDirectory();
-      const filename = 'shared_image.png';
-      final file = await File('${directory.path}/$filename').create();
-      await file.writeAsBytes(pngBytes);
-      final xFile = XFile(file.path);
-      await Share.shareXFiles([xFile], text: 'AI generated Image');
+  Future<void> shareImage() async {
+    try {
+      if (croppedFile == null) {
+        CachedNetworkImageProvider imageProvider =
+            CachedNetworkImageProvider(imageUrl);
+        imageProvider.resolve(const ImageConfiguration());
+        ImageStream imageStream =
+            imageProvider.resolve(const ImageConfiguration());
+        Completer<Uint8List> completer = Completer();
+        imageStream.addListener(
+            ImageStreamListener((imageInfo, synchronousCall) async {
+          ByteData? byteData =
+              await imageInfo.image.toByteData(format: ImageByteFormat.png);
+          Uint8List pngBytes = byteData!.buffer.asUint8List();
+          completer.complete(pngBytes);
+        }));
+        Uint8List pngBytes = await completer.future;
+
+        final directory = await getTemporaryDirectory();
+        const filename = 'shared_image.png';
+        final file = await File('${directory.path}/$filename').create();
+        await file.writeAsBytes(pngBytes);
+        final xFile = XFile(file.path);
+        await Share.shareXFiles([xFile], text: 'AI generated Image');
+      } else {
+        final xFile = XFile(croppedFile!.path);
+        await Share.shareXFiles([xFile], text: 'AI generated Image');
+      }
     } catch (e) {
       log('Failed to take a screenshot');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -84,6 +129,8 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
     }
   }
 
+  // shareImage and downloadImg functions with screenshot package
+
   // Future<void> shareImage() async {
   //   await screenshotController
   //       .capture(delay: const Duration(milliseconds: 100), pixelRatio: 1.0)
@@ -93,7 +140,6 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
   //       const filename = "share.png";
   //       final imgPath = await File('$directory/$filename').create();
   //       await imgPath.writeAsBytes(img);
-
   //       final xFile = XFile(imgPath.path);
   //       await Share.shareXFiles([xFile], text: 'AI generated Image');
   //     } else {
@@ -115,9 +161,9 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
   //   if (result.isGranted) {
   //     const foldername = 'AI Image';
   //     final path = Directory("storage/emulated/0/$foldername");
-
+//
   //     final filename = "${DateTime.now().millisecondsSinceEpoch}.png";
-
+//
   //     if (await path.exists()) {
   //       await screenshotController.captureAndSave(
   //         path.path,
@@ -140,7 +186,7 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
   //         fileName: filename,
   //         pixelRatio: 1.0,
   //       );
-
+//
   //       ScaffoldMessenger.of(context).showSnackBar(
   //         SnackBar(
   //           content: Text(
@@ -161,94 +207,76 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
   //   }
   // }
 
-  // _cropImage() async {
-  //   final croppedFile = await ImageCropper().cropImage(
-  //       sourcePath: image,
-  //       aspectRatioPresets: Platform.isAndroid
-  //           ? [
-  //               CropAspectRatioPreset.square,
-  //               CropAspectRatioPreset.ratio3x2,
-  //               CropAspectRatioPreset.original,
-  //               CropAspectRatioPreset.ratio4x3,
-  //               CropAspectRatioPreset.ratio16x9
-  //             ]
-  //           : [
-  //               CropAspectRatioPreset.original,
-  //               CropAspectRatioPreset.square,
-  //               CropAspectRatioPreset.ratio3x2,
-  //               CropAspectRatioPreset.ratio4x3,
-  //               CropAspectRatioPreset.ratio5x3,
-  //               CropAspectRatioPreset.ratio5x4,
-  //               CropAspectRatioPreset.ratio7x5,
-  //               CropAspectRatioPreset.ratio16x9
-  //             ],
-  //       uiSettings: [
-  //         AndroidUiSettings(
-  //             toolbarTitle: "Image Cropper",
-  //             toolbarColor: Colors.deepOrange,
-  //             toolbarWidgetColor: Colors.white,
-  //             initAspectRatio: CropAspectRatioPreset.original,
-  //             lockAspectRatio: false),
-  //         IOSUiSettings(
-  //           title: "Image Cropper",
-  //         )
-  //       ]);
-  //   if (croppedFile != null) {
-  //     imageCache.clear();
-  //     // setState(() {
-  //     //   imageFile = File(croppedFile.path);
-  //     // });
-  //     // reload();
-  //   }
-  // }
+  Future<void> _cropImage(path) async {
+    croppedFile = await ImageCropper().cropImage(
+      sourcePath: path,
+      aspectRatioPresets: Platform.isAndroid
+          ? [
+              CropAspectRatioPreset.square,
+              CropAspectRatioPreset.ratio3x2,
+              CropAspectRatioPreset.original,
+              CropAspectRatioPreset.ratio4x3,
+              CropAspectRatioPreset.ratio16x9
+            ]
+          : [
+              CropAspectRatioPreset.original,
+              CropAspectRatioPreset.square,
+              CropAspectRatioPreset.ratio3x2,
+              CropAspectRatioPreset.ratio4x3,
+              CropAspectRatioPreset.ratio5x3,
+              CropAspectRatioPreset.ratio5x4,
+              CropAspectRatioPreset.ratio7x5,
+              CropAspectRatioPreset.ratio16x9
+            ],
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: "Image Editor",
+          toolbarColor: btnColor,
+          toolbarWidgetColor: Colors.white,
+          initAspectRatio: CropAspectRatioPreset.original,
+          lockAspectRatio: false,
+        ),
+        IOSUiSettings(
+          title: "Image Editor",
+        ),
+      ],
+    );
+  }
 
-  Future<void> downloadImage(imageUrl) async {
-    var result = await Permission.storage.request();
-    if (result.isGranted) {
-      try {
-        const foldername = 'AI Image';
-        final path = Directory("storage/emulated/0/$foldername");
-
-        final filename = "${DateTime.now().millisecondsSinceEpoch}.png";
-        if (!(await path.exists())) {
-          path.createSync(recursive: true);
-        }
-
-        final Completer<void> completer = Completer<void>();
-        final image = CachedNetworkImageProvider(imageUrl);
-        final imageStream =
-            image.resolve(createLocalImageConfiguration(context));
-        imageStream.addListener(ImageStreamListener((imageInfo, _) async {
-          final ByteData? bytes =
+  Future<void> _editImage() async {
+    try {
+      if (croppedFile == null) {
+        CachedNetworkImageProvider imageProvider =
+            CachedNetworkImageProvider(imageUrl);
+        imageProvider.resolve(const ImageConfiguration());
+        ImageStream imageStream =
+            imageProvider.resolve(const ImageConfiguration());
+        Completer<Uint8List> completer = Completer();
+        imageStream.addListener(
+            ImageStreamListener((imageInfo, synchronousCall) async {
+          ByteData? byteData =
               await imageInfo.image.toByteData(format: ImageByteFormat.png);
-          final Uint8List pngBytes = bytes!.buffer.asUint8List();
-          File savedFile = File('${path.path}/$filename');
-          await savedFile.writeAsBytes(pngBytes);
-
-          await GallerySaver.saveImage(savedFile.path, albumName: foldername);
-          completer.complete();
+          Uint8List pngBytes = byteData!.buffer.asUint8List();
+          completer.complete(pngBytes);
         }));
+        Uint8List pngBytes = await completer.future;
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Downloaded to $path',
-            ),
-          ),
-        );
-
-        await completer.future;
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: TextWidget(
-              label: 'Failed to download.',
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
+        final directory = await getTemporaryDirectory();
+        const filename = 'temp_image.png';
+        final file = await File('${directory.path}/$filename').create();
+        await file.writeAsBytes(pngBytes);
+        await _cropImage(file.path);
+      } else {
+        await _cropImage(croppedFile!.path);
       }
-    } else {
+
+      setState(() {});
+
+      if (croppedFile != null) {
+        // Cropped image is available as croppedFile
+        imageCache.clear();
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: TextWidget(
@@ -260,21 +288,18 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
     }
   }
 
-  // Future<void> downloadImage(String imageUrl) async {
+  // Future<void> downloadImage(imageUrl) async {
   //   var result = await Permission.storage.request();
   //   if (result.isGranted) {
   //     try {
   //       const foldername = 'AI Image';
-  //       final appDir = await getExternalStorageDirectory();
-  //       final String appDocPath = appDir!.path;
-  //       final String folderPath = path.join(appDocPath, foldername);
-
+  //       final path = Directory("storage/emulated/0/$foldername");
+  //
   //       final filename = "${DateTime.now().millisecondsSinceEpoch}.png";
-
-  //       if (!(await Directory(folderPath).exists())) {
-  //         await Directory(folderPath).create(recursive: true);
+  //       if (!(await path.exists())) {
+  //         path.createSync(recursive: true);
   //       }
-
+  //
   //       final Completer<void> completer = Completer<void>();
   //       final image = CachedNetworkImageProvider(imageUrl);
   //       final imageStream =
@@ -283,21 +308,21 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
   //         final ByteData? bytes =
   //             await imageInfo.image.toByteData(format: ImageByteFormat.png);
   //         final Uint8List pngBytes = bytes!.buffer.asUint8List();
-  //         File savedFile = File('$folderPath/$filename');
+  //         File savedFile = File('${path.path}/$filename');
   //         await savedFile.writeAsBytes(pngBytes);
-
+  //
   //         await GallerySaver.saveImage(savedFile.path, albumName: foldername);
   //         completer.complete();
   //       }));
-
+  //
   //       ScaffoldMessenger.of(context).showSnackBar(
   //         SnackBar(
   //           content: Text(
-  //             'Downloaded to $folderPath',
+  //             'Downloaded to $path',
   //           ),
   //         ),
   //       );
-
+  //
   //       await completer.future;
   //     } catch (e) {
   //       ScaffoldMessenger.of(context).showSnackBar(
@@ -321,8 +346,77 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
   //   }
   // }
 
+  Future<void> downloadImage() async {
+    var result = await Permission.storage.request();
+    if (result.isGranted) {
+      try {
+        const foldername = 'AI Image';
+        if (croppedFile == null) {
+          final directory = await getExternalStorageDirectory();
+          final String appDocPath = directory!.path;
+          print(appDocPath);
+          final String folderPath = '$appDocPath/$foldername';
+          final filename = "${DateTime.now().millisecondsSinceEpoch}.png";
+          if (!(await Directory(folderPath).exists())) {
+            await Directory(folderPath).create(recursive: true);
+          }
+          final Completer<void> completer = Completer<void>();
+          final imageProvider = CachedNetworkImageProvider(imageUrl);
+          final imageStream =
+              imageProvider.resolve(createLocalImageConfiguration(context));
+          imageStream.addListener(ImageStreamListener((imageInfo, _) async {
+            final ByteData? bytes =
+                await imageInfo.image.toByteData(format: ImageByteFormat.png);
+            final Uint8List pngBytes = bytes!.buffer.asUint8List();
+            File savedFile = File('$folderPath/$filename');
+            await savedFile.writeAsBytes(pngBytes);
+            await GallerySaver.saveImage(savedFile.path, albumName: foldername);
+            completer.complete();
+          }));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Downloaded to $folderPath',
+              ),
+            ),
+          );
+          await completer.future;
+        } else {
+          await GallerySaver.saveImage(croppedFile!.path,
+              albumName: foldername);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Downloaded to ${croppedFile!.path}',
+              ),
+            ),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: TextWidget(
+              label: 'Failed to download.',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: TextWidget(
+            label: 'Permission denied',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    print(croppedFile?.path);
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
@@ -406,28 +500,7 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
                         shape: const StadiumBorder(),
                       ),
                       onPressed: () async {
-                        if (textController.text.isNotEmpty &&
-                            dropValue!.isNotEmpty) {
-                          setState(() {
-                            isLoaded = true;
-                          });
-                          image = await ApiService.generateImage(
-                            textController.text,
-                            dropValue!,
-                          );
-                          setState(() {
-                            isLoaded = false;
-                          });
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: TextWidget(
-                                label: 'Please pass the querry and size.',
-                              ),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
+                        await getImageUrl();
                       },
                       child: const Text('Generate'),
                     ),
@@ -437,7 +510,7 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
             ),
             Expanded(
               flex: 3,
-              child: !isLoaded && image.isNotEmpty
+              child: !isLoaded && imageUrl.isNotEmpty
                   ? Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -448,10 +521,33 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
                           ),
                           // child: Screenshot(
                           //   controller: screenshotController,
-                          child: Image.network(
-                            image,
-                            fit: BoxFit.contain,
-                          ),
+                          child: croppedFile == null
+                              ? Image.network(
+                                  imageUrl,
+                                  fit: BoxFit.contain,
+                                )
+                              : Stack(
+                                  children: [
+                                    Image.file(
+                                      File(croppedFile!.path),
+                                      fit: BoxFit.contain,
+                                    ),
+                                    Positioned(
+                                      child: IconButton(
+                                        icon: Icon(
+                                          Icons.arrow_circle_left_outlined,
+                                          color: Colors.grey[500],
+                                          size: 30,
+                                        ),
+                                        onPressed: () {
+                                          croppedFile = null;
+                                          setState(() {});
+                                          imageCache.clear();
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
                           // ),
                         ),
                         const SizedBox(height: 12),
@@ -467,24 +563,24 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
                                   backgroundColor: btnColor,
                                 ),
                                 onPressed: () async {
-                                  await downloadImage(image);
+                                  await downloadImage();
                                 },
                                 label: const Text('Download'),
                               ),
                             ),
                             const SizedBox(width: 12),
-                            // ElevatedButton.icon(
-                            //   onPressed: () {
-                            //     _cropImage();
-                            //   },
-                            //   icon: const Icon(Icons.edit),
-                            //   style: ElevatedButton.styleFrom(
-                            //     padding: const EdgeInsets.all(8),
-                            //     backgroundColor: btnColor,
-                            //   ),
-                            //   label: const Text('Edit'),
-                            // ),
-                            // const SizedBox(width: 12),
+                            ElevatedButton.icon(
+                              onPressed: () async {
+                                await _editImage();
+                              },
+                              icon: const Icon(Icons.edit),
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.all(8),
+                                backgroundColor: btnColor,
+                              ),
+                              label: const Text('Edit'),
+                            ),
+                            const SizedBox(width: 12),
                             ElevatedButton.icon(
                               icon: const Icon(
                                 Icons.share,
@@ -494,7 +590,7 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
                                 backgroundColor: btnColor,
                               ),
                               onPressed: () async {
-                                shareImage(image);
+                                shareImage();
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text('Image shared'),
@@ -507,7 +603,7 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
                         )
                       ],
                     )
-                  : !isLoaded && !image.isNotEmpty
+                  : !isLoaded && !imageUrl.isNotEmpty
                       ? Container(
                           alignment: Alignment.center,
                           decoration: BoxDecoration(

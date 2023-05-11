@@ -141,8 +141,8 @@ class _AudioToTextState extends State<AudioToText> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Flexible(
-                      child: const Text(
+                    const Flexible(
+                      child: Text(
                         maxLines: 1,
                         'Choose Audio file to read from hgoiwhegihwoghioweihgohweo...',
                         style: TextStyle(
