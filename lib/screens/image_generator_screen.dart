@@ -30,10 +30,10 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
   List<String> values = ['256x256', '512x512', '1024x1024'];
   String? dropValue;
   String imageUrl =
-      'https://steamuserimages-a.akamaihd.net/ugc/1002558009224554574/9FF0732874DD9F917BD7738FA2548BD4BFD01FED/?imw=512&&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false';
+      'https://images.unsplash.com/photo-1538360259192-2081a1f28ebb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8MTV8fHNhbiUyMGRpZWdvfGVufDB8fDB8fA%3D%3D&w=1000&q=80';
   bool isLoaded = false;
 
-  CroppedFile? croppedFile;
+  CroppedFile? _croppedFile;
 
   // ScreenshotController screenshotController = ScreenshotController();
   late TextEditingController textController;
@@ -55,7 +55,7 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
     if (textController.text.isNotEmpty && dropValue!.isNotEmpty) {
       setState(() {
         isLoaded = true;
-        croppedFile = null;
+        _croppedFile = null;
       });
       imageCache.clear();
       try {
@@ -90,7 +90,7 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
 
   Future<void> shareImage() async {
     try {
-      if (croppedFile == null) {
+      if (_croppedFile == null) {
         CachedNetworkImageProvider imageProvider =
             CachedNetworkImageProvider(imageUrl);
         imageProvider.resolve(const ImageConfiguration());
@@ -113,7 +113,7 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
         final xFile = XFile(file.path);
         await Share.shareXFiles([xFile], text: 'AI generated Image');
       } else {
-        final xFile = XFile(croppedFile!.path);
+        final xFile = XFile(_croppedFile!.path);
         await Share.shareXFiles([xFile], text: 'AI generated Image');
       }
     } catch (e) {
@@ -161,9 +161,9 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
   //   if (result.isGranted) {
   //     const foldername = 'AI Image';
   //     final path = Directory("storage/emulated/0/$foldername");
-//
+  //
   //     final filename = "${DateTime.now().millisecondsSinceEpoch}.png";
-//
+  //
   //     if (await path.exists()) {
   //       await screenshotController.captureAndSave(
   //         path.path,
@@ -186,7 +186,7 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
   //         fileName: filename,
   //         pixelRatio: 1.0,
   //       );
-//
+  //
   //       ScaffoldMessenger.of(context).showSnackBar(
   //         SnackBar(
   //           content: Text(
@@ -208,8 +208,10 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
   // }
 
   Future<void> _cropImage(path) async {
-    croppedFile = await ImageCropper().cropImage(
+    final croppedFile = await ImageCropper().cropImage(
       sourcePath: path,
+      compressQuality: 90,
+      compressFormat: ImageCompressFormat.png,
       aspectRatioPresets: Platform.isAndroid
           ? [
               CropAspectRatioPreset.square,
@@ -241,11 +243,16 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
         ),
       ],
     );
+    if (croppedFile != null) {
+      setState(() {
+        _croppedFile = croppedFile;
+      });
+    }
   }
 
   Future<void> _editImage() async {
     try {
-      if (croppedFile == null) {
+      if (_croppedFile == null) {
         CachedNetworkImageProvider imageProvider =
             CachedNetworkImageProvider(imageUrl);
         imageProvider.resolve(const ImageConfiguration());
@@ -267,14 +274,7 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
         await file.writeAsBytes(pngBytes);
         await _cropImage(file.path);
       } else {
-        await _cropImage(croppedFile!.path);
-      }
-
-      setState(() {});
-
-      if (croppedFile != null) {
-        // Cropped image is available as croppedFile
-        imageCache.clear();
+        await _cropImage(_croppedFile!.path);
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -351,10 +351,9 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
     if (result.isGranted) {
       try {
         const foldername = 'AI Image';
-        if (croppedFile == null) {
+        if (_croppedFile == null) {
           final directory = await getExternalStorageDirectory();
           final String appDocPath = directory!.path;
-          print(appDocPath);
           final String folderPath = '$appDocPath/$foldername';
           final filename = "${DateTime.now().millisecondsSinceEpoch}.png";
           if (!(await Directory(folderPath).exists())) {
@@ -382,12 +381,12 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
           );
           await completer.future;
         } else {
-          await GallerySaver.saveImage(croppedFile!.path,
+          await GallerySaver.saveImage(_croppedFile!.path,
               albumName: foldername);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Downloaded to ${croppedFile!.path}',
+                'Downloaded to ${_croppedFile!.path}',
               ),
             ),
           );
@@ -416,7 +415,6 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print(croppedFile?.path);
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
@@ -521,16 +519,29 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
                           ),
                           // child: Screenshot(
                           //   controller: screenshotController,
-                          child: croppedFile == null
-                              ? Image.network(
-                                  imageUrl,
-                                  fit: BoxFit.contain,
+                          child: _croppedFile == null
+                              ? Container(
+                                  constraints: BoxConstraints(
+                                      maxHeight:
+                                          MediaQuery.of(context).size.height *
+                                              0.5),
+                                  child: Image.network(
+                                    imageUrl,
+                                    fit: BoxFit.contain,
+                                  ),
                                 )
                               : Stack(
                                   children: [
-                                    Image.file(
-                                      File(croppedFile!.path),
-                                      fit: BoxFit.contain,
+                                    Container(
+                                      constraints: BoxConstraints(
+                                        maxHeight:
+                                            MediaQuery.of(context).size.height *
+                                                0.5,
+                                      ),
+                                      child: Image.file(
+                                        File(_croppedFile!.path),
+                                        fit: BoxFit.cover,
+                                      ),
                                     ),
                                     Positioned(
                                       child: IconButton(
@@ -540,7 +551,7 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
                                           size: 30,
                                         ),
                                         onPressed: () {
-                                          croppedFile = null;
+                                          _croppedFile = null;
                                           setState(() {});
                                           imageCache.clear();
                                         },
@@ -637,7 +648,7 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
                               TextWidget(
                                 label: "Waiting for image to be generated...",
                                 fontSize: 16,
-                              )
+                              ),
                             ],
                           ),
                         ),

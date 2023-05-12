@@ -152,11 +152,6 @@ class _ChatScreenState extends State<ChatScreen> {
 
       setState(() {});
 
-      // Future.delayed(const Duration(milliseconds: 500), () {
-      //   TextToSpeech.speak(chatProvider
-      //       .bot.chatList[chatProvider.bot.chatList.length - 1].msg);
-      // });
-
       Future.delayed(const Duration(milliseconds: 500), () {
         speak(chatProvider
             .bot.chatList[chatProvider.bot.chatList.length - 1].msg);
