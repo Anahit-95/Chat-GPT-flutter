@@ -152,7 +152,11 @@ class ApiService {
       var utf8decoder = const Utf8Decoder(allowMalformed: true);
       var response = await request.send();
       var newResponse = await http.Response.fromStream(response);
-      final responseData = json.decode(newResponse.body);
+      final responseData = jsonDecode(newResponse.body);
+
+      if (responseData['error'] != null) {
+        throw HttpException(responseData['error']["message"]);
+      }
       final responseText = utf8decoder.convert(responseData['text'].codeUnits);
       // print(responseData);
       return responseText;
@@ -179,6 +183,9 @@ class ApiService {
       var response = await request.send();
       var newResponse = await http.Response.fromStream(response);
       final responseData = json.decode(newResponse.body);
+      if (responseData['error'] != null) {
+        throw HttpException(responseData['error']["message"]);
+      }
       final responseText = utf8decoder.convert(responseData['text'].codeUnits);
       print(responseData);
       return responseText;

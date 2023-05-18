@@ -27,7 +27,7 @@ class ChatProvider with ChangeNotifier {
   Future<void> sendMessageAndGetAnswers({
     required String msg,
     required String chosenModelId,
-    String? systemMessage,
+    // String? systemMessage,
   }) async {
     if (chosenModelId.toLowerCase().startsWith('gpt')) {
       List<Map<String, String>> messages = [];
@@ -54,7 +54,7 @@ class ChatProvider with ChangeNotifier {
       bot.chatList.addAll(await ApiService.sendMessageGPT(
         message: msg,
         modelId: chosenModelId,
-        systemMessage: systemMessage!,
+        systemMessage: bot.systemMessage,
       ));
     } else {
       bot.chatList.addAll(await ApiService.sendMessage(

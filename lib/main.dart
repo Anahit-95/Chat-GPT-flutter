@@ -1,4 +1,6 @@
+import 'package:chat_gpt_api/blocks/image_bloc/image_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 
 import './providers/bots_provider.dart';
@@ -7,6 +9,8 @@ import './providers/models_provider.dart';
 import './constants/constants.dart';
 import './services/text_to_speach.dart';
 import './screens/home_screen.dart';
+import 'blocks/bots_bloc/bots_bloc.dart';
+import 'blocks/models_bloc/models_bloc.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,17 +24,15 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
+    return MultiBlocProvider(
       providers: [
-        ChangeNotifierProvider(
-          create: (_) => BotsProvider(),
+        BlocProvider(
+          create: (_) => BotsBloc()..add(FetchBots()),
         ),
-        ChangeNotifierProvider(
-          create: (_) => ModelsProvider(),
+        BlocProvider(
+          create: (_) => ModelsBloc(),
         ),
-        // ChangeNotifierProvider(
-        //   create: (_) => ChatProvider(),
-        // ),
+        BlocProvider(create: (_) => ImageBloc())
       ],
       child: MaterialApp(
         title: 'Flutter Demo',

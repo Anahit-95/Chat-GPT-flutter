@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:flutter/material.dart';
 
 import './chat_model.dart';
@@ -16,4 +17,20 @@ class Bot {
     required this.chatList,
     this.systemMessage,
   });
+
+  Bot copyWith({
+    String? title,
+    IconData? iconData,
+    Color? color,
+    List<ChatModel>? chatList,
+    String? systemMessage,
+  }) {
+    return Bot(
+      title: title ?? this.title,
+      iconData: iconData ?? this.iconData,
+      color: color ?? this.color,
+      chatList: chatList ?? this.chatList,
+      systemMessage: systemMessage ?? this.systemMessage,
+    );
+  }
 }

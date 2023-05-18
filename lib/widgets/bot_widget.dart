@@ -1,10 +1,12 @@
 import 'package:chat_gpt_api/screens/chat_screen.dart';
 import 'package:chat_gpt_api/screens/image_generator_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+// import 'package:provider/provider.dart';
 
+import '../blocks/chat_bloc/chat_bloc.dart';
 import '../models/bot_model.dart';
-import '../providers/chats_provider.dart';
+// import '../providers/chats_provider.dart';
 import '../screens/audio_screen.dart';
 
 class BotWidget extends StatelessWidget {
@@ -28,8 +30,8 @@ class BotWidget extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ChangeNotifierProvider(
-                  create: (context) => ChatProvider(bot: bot),
+                builder: (context) => BlocProvider(
+                  create: (context) => ChatBloc(bot: bot),
                   child: const ChatScreen(),
                 ),
               ),
@@ -40,8 +42,8 @@ class BotWidget extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ChangeNotifierProvider(
-                  create: (context) => ChatProvider(bot: bot),
+                builder: (context) => BlocProvider(
+                  create: (context) => ChatBloc(bot: bot),
                   child: const AudioToText(),
                 ),
               ),
