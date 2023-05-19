@@ -1,46 +1,44 @@
 import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:chat_gpt_api/blocks/text_to_speech_bloc/text_to_speech_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../services/assets_manager.dart';
 import '../constants/constants.dart';
-import '../services/text_to_speach.dart';
+// import '../services/text_to_speach.dart';
 import './text_widget.dart';
 
 class ChatWidget extends StatefulWidget {
-  ChatWidget({
+  const ChatWidget({
     super.key,
     required this.msg,
     required this.chatIndex,
+    required this.messageIndex,
     this.shouldAnimate = false,
-    this.lastMessageSpeaking = false,
   });
 
   final String msg;
   final int chatIndex;
+  final int messageIndex;
   final bool shouldAnimate;
-  bool lastMessageSpeaking;
 
   @override
   State<ChatWidget> createState() => _ChatWidgetState();
 }
 
 class _ChatWidgetState extends State<ChatWidget> {
+  late TextToSpeechBloc textToSpeechBloc;
   bool _isSpeaking = false;
-  late TextToSpeech _textToSpeech;
 
   @override
   void initState() {
     super.initState();
-    _textToSpeech = TextToSpeech(onStateChanged: (isSpeaking) {
-      setState(() {
-        _isSpeaking = isSpeaking;
-      });
-    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final textToSpeechBloc = BlocProvider.of<TextToSpeechBloc>(context);
     return Column(
       children: [
         Material(
@@ -63,7 +61,7 @@ class _ChatWidgetState extends State<ChatWidget> {
                       ? TextWidget(
                           label: widget.msg,
                         )
-                      : (widget.shouldAnimate || widget.lastMessageSpeaking)
+                      : (widget.shouldAnimate)
                           ? DefaultTextStyle(
                               style: const TextStyle(
                                 color: Colors.white,
@@ -95,23 +93,47 @@ class _ChatWidgetState extends State<ChatWidget> {
                         mainAxisAlignment: MainAxisAlignment.end,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          InkWell(
-                            onTap: () {
-                              if (_textToSpeech.isSpeaking ||
-                                  widget.lastMessageSpeaking) {
-                                print(widget.lastMessageSpeaking);
-                                widget.lastMessageSpeaking = false;
-                                _textToSpeech.stopSpeaking();
-                              } else {
-                                _textToSpeech.speak(widget.msg);
+                          BlocConsumer<TextToSpeechBloc, TextToSpeechState>(
+                            listener: (context, state) {
+                              if (state is TextToSpeechMuted) {
+                                setState(() {
+                                  _isSpeaking = false;
+                                });
+                              }
+                              if (state is TextToSpeechSpeaking) {
+                                setState(() {
+                                  _isSpeaking = true;
+                                });
                               }
                             },
-                            child: Icon(
-                              _isSpeaking || widget.lastMessageSpeaking
-                                  ? Icons.volume_up
-                                  : Icons.volume_down_outlined,
-                              color: Colors.white,
-                            ),
+                            builder: (context, state) {
+                              if (state is TextToSpeechSpeaking &&
+                                  widget.messageIndex ==
+                                      textToSpeechBloc.currentMessageIndex) {
+                                return InkWell(
+                                  onTap: () {
+                                    // widget.lastMessageSpeaking = false;
+                                    textToSpeechBloc.add(StopSpeaking());
+                                  },
+                                  child: const Icon(
+                                    Icons.volume_up,
+                                    color: Colors.white,
+                                  ),
+                                );
+                              }
+                              return InkWell(
+                                onTap: () {
+                                  textToSpeechBloc.add(StartSpeaking(
+                                    text: widget.msg,
+                                    messageIndex: widget.messageIndex,
+                                  ));
+                                },
+                                child: const Icon(
+                                  Icons.volume_down_outlined,
+                                  color: Colors.white,
+                                ),
+                              );
+                            },
                           ),
                           const SizedBox(
                             width: 5,

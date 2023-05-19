@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:chat_gpt_api/blocks/text_to_speech_bloc/text_to_speech_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -29,14 +30,14 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   bool _isTyping = false;
   bool _isListening = false;
-  bool _isSpeaking = false;
+  // bool _isSpeaking = false;
 
   late TextEditingController textEditingController;
   late ScrollController _listScrollController;
   late FocusNode focusNode;
   late SpeechToText speechToText;
-  // late TextToSpeech _textToSpeech;
-  late FlutterTts _textToSpeech;
+
+  late TextToSpeechBloc textToSpeechBloc;
 
   @override
   void initState() {
@@ -45,17 +46,10 @@ class _ChatScreenState extends State<ChatScreen> {
     textEditingController = TextEditingController();
     focusNode = FocusNode();
     speechToText = SpeechToText();
-    // _textToSpeech = TextToSpeech();
-    _textToSpeech = FlutterTts();
-    // _textToSpeech = TextToSpeech(onStateChanged: (isSpeaking) {
-    //   if (mounted) {
-    //     setState(() {
-    //       _isSpeaking = isSpeaking;
-    //     });
-    //   }
-    // });
-    // TextToSpeech.initTTS();
     BlocProvider.of<ChatBloc>(context).add(FetchChat());
+    textToSpeechBloc = BlocProvider.of<TextToSpeechBloc>(context);
+    textToSpeechBloc.initializeTts();
+    textToSpeechBloc.add(TtsInitialized());
   }
 
   @override
@@ -64,54 +58,8 @@ class _ChatScreenState extends State<ChatScreen> {
     textEditingController.dispose();
     focusNode.dispose();
     speechToText.cancel();
-    _textToSpeech.stop();
-
-    // if (_isSpeaking) {
-    //   if (mounted) {
-    //     _isSpeaking = false;
-    //     _textToSpeech?.stopSpeaking();
-    //   }
-    // }
+    textToSpeechBloc.add(DisposeTts());
     super.dispose();
-  }
-
-  // Future<void> speak(String text) async {
-  //   await _textToSpeech.speak(text);
-  //   setState(() {
-  //     _isSpeaking = true;
-  //   });
-  // }
-
-  // Future<void> stopSpeaking() async {
-  //   await _textToSpeech.stopSpeaking();
-  //   setState(() {
-  //     _isSpeaking = false;
-  //   });
-  // }
-
-  Future<void> speak(String text) async {
-    _textToSpeech.setStartHandler(() {
-      print('TTS IS STARTED');
-      setState(() {
-        _isSpeaking = true;
-      });
-    });
-
-    _textToSpeech.setCompletionHandler(() {
-      print('Completed');
-      setState(() {
-        _isSpeaking = false;
-      });
-    });
-    _textToSpeech.setErrorHandler((message) {
-      setState(() {
-        _isSpeaking = false;
-      });
-      print(message);
-    });
-
-    await _textToSpeech.awaitSpeakCompletion(true);
-    _textToSpeech.speak(text);
   }
 
   Future<void> sendMessageFCT(
@@ -168,7 +116,11 @@ class _ChatScreenState extends State<ChatScreen> {
       setState(() {});
 
       Future.delayed(const Duration(milliseconds: 500), () {
-        speak(chatBloc.bot.chatList[chatBloc.bot.chatList.length - 1].msg);
+        // speak(chatBloc.bot.chatList[chatBloc.bot.chatList.length - 1].msg);
+        textToSpeechBloc.add(StartSpeaking(
+          messageIndex: chatBloc.bot.chatList.length - 1,
+          text: chatBloc.bot.chatList[chatBloc.bot.chatList.length - 1].msg,
+        ));
       });
     } catch (error) {
       log("error $error");
@@ -268,11 +220,9 @@ class _ChatScreenState extends State<ChatScreen> {
                       return ChatWidget(
                         msg: chatBloc.bot.chatList[index].msg,
                         chatIndex: chatBloc.bot.chatList[index].chatIndex,
+                        messageIndex: index,
                         shouldAnimate:
                             chatBloc.bot.chatList.length - 1 == index,
-                        lastMessageSpeaking:
-                            chatBloc.bot.chatList.length - 1 == index &&
-                                _isSpeaking,
                       );
                     },
                   ),

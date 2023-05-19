@@ -24,7 +24,7 @@ class BotsBloc extends Bloc<BotsEvent, BotsState> {
       chatList: [
         ChatModel(
           msg:
-              "Hi, send me the audio file, and I'll detext the spoken text, from any language.",
+              "Hi, send me the audio file, and I'll detect the spoken text, from any language.",
           chatIndex: 1,
         ),
       ],

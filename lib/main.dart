@@ -1,4 +1,5 @@
 import 'package:chat_gpt_api/blocks/image_bloc/image_bloc.dart';
+import 'package:chat_gpt_api/blocks/text_to_speech_bloc/text_to_speech_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
@@ -26,13 +27,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(
-          create: (_) => BotsBloc()..add(FetchBots()),
-        ),
-        BlocProvider(
-          create: (_) => ModelsBloc(),
-        ),
-        BlocProvider(create: (_) => ImageBloc())
+        BlocProvider(create: (_) => BotsBloc()..add(FetchBots())),
+        BlocProvider(create: (_) => ModelsBloc()),
+        BlocProvider(create: (_) => ImageBloc()),
+        BlocProvider(create: (_) => TextToSpeechBloc()),
       ],
       child: MaterialApp(
         title: 'Flutter Demo',

@@ -7,6 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 import '../blocks/chat_bloc/chat_bloc.dart';
+import '../blocks/text_to_speech_bloc/text_to_speech_bloc.dart';
 import '../providers/chats_provider.dart';
 import '../services/api_services.dart';
 import '../services/assets_manager.dart';
@@ -22,6 +23,7 @@ class AudioToText extends StatefulWidget {
 }
 
 class _AudioToTextState extends State<AudioToText> {
+  late TextToSpeechBloc textToSpeechBloc;
   late ScrollController _listScrollController;
   bool _isTyping = false;
 
@@ -29,12 +31,16 @@ class _AudioToTextState extends State<AudioToText> {
   void initState() {
     _listScrollController = ScrollController();
     BlocProvider.of<ChatBloc>(context).add(FetchChat());
+    textToSpeechBloc = BlocProvider.of<TextToSpeechBloc>(context);
+    textToSpeechBloc.initializeTts();
+    textToSpeechBloc.add(TtsInitialized());
     super.initState();
   }
 
   @override
   void dispose() {
     _listScrollController.dispose();
+    textToSpeechBloc.add(DisposeTts());
     super.dispose();
   }
 
@@ -143,6 +149,7 @@ class _AudioToTextState extends State<AudioToText> {
                       return ChatWidget(
                         msg: chatBloc.bot.chatList[index].msg,
                         chatIndex: chatBloc.bot.chatList[index].chatIndex,
+                        messageIndex: index,
                         shouldAnimate:
                             chatBloc.bot.chatList.length - 1 == index,
                       );
