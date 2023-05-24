@@ -31,9 +31,15 @@ class TextToSpeechBloc extends Bloc<TextToSpeechEvent, TextToSpeechState> {
 
   Future<void> _onStartSpeaking(
       StartSpeaking event, Emitter<TextToSpeechState> emit) async {
+    if (isSpeaking) {
+      await flutterTts.stop();
+      isSpeaking = false;
+      emit(TextToSpeechMuted());
+    }
     emit(TextToSpeechSpeaking());
     currentMessageIndex = event.messageIndex;
     isSpeaking = true;
+    await flutterTts.awaitSpeakCompletion(true);
     await flutterTts.speak(event.text);
     isSpeaking = false;
     emit(TextToSpeechMuted());

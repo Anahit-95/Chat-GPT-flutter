@@ -9,7 +9,7 @@ part 'bots_event.dart';
 part 'bots_state.dart';
 
 class BotsBloc extends Bloc<BotsEvent, BotsState> {
-  final List<Bot> _botList = [
+  final List<Bot> botList = [
     Bot(
       title: 'Simple Bot',
       iconData: Icons.android,
@@ -92,13 +92,12 @@ class BotsBloc extends Bloc<BotsEvent, BotsState> {
       chatList: [],
     ),
   ];
-
   BotsBloc() : super(BotsLoading()) {
     on<FetchBots>((event, emit) async {
       try {
         emit(BotsLoading());
-        await Future.delayed(const Duration(seconds: 1));
-        emit(BotsLoaded(_botList));
+        // await Future.delayed(const Duration(seconds: 1));
+        emit(BotsLoaded(botList));
       } catch (e) {
         emit(const BotsError('Failed to load bot list'));
       }

@@ -6,10 +6,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../services/assets_manager.dart';
 import '../constants/constants.dart';
-// import '../services/text_to_speach.dart';
 import './text_widget.dart';
 
-class ChatWidget extends StatefulWidget {
+class ChatWidget extends StatelessWidget {
   const ChatWidget({
     super.key,
     required this.msg,
@@ -24,32 +23,19 @@ class ChatWidget extends StatefulWidget {
   final bool shouldAnimate;
 
   @override
-  State<ChatWidget> createState() => _ChatWidgetState();
-}
-
-class _ChatWidgetState extends State<ChatWidget> {
-  late TextToSpeechBloc textToSpeechBloc;
-  bool _isSpeaking = false;
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final textToSpeechBloc = BlocProvider.of<TextToSpeechBloc>(context);
     return Column(
       children: [
         Material(
-          color: widget.chatIndex == 0 ? scaffoldBackgroundColor : cardColor,
+          color: chatIndex == 0 ? scaffoldBackgroundColor : cardColor,
           child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Image.asset(
-                  widget.chatIndex == 0
+                  chatIndex == 0
                       ? AssetsManager.userImage
                       : AssetsManager.botImage,
                   height: 30,
@@ -57,11 +43,11 @@ class _ChatWidgetState extends State<ChatWidget> {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: widget.chatIndex == 0
+                  child: chatIndex == 0
                       ? TextWidget(
-                          label: widget.msg,
+                          label: msg,
                         )
-                      : (widget.shouldAnimate)
+                      : (shouldAnimate)
                           ? DefaultTextStyle(
                               style: const TextStyle(
                                 color: Colors.white,
@@ -74,12 +60,12 @@ class _ChatWidgetState extends State<ChatWidget> {
                                 displayFullTextOnTap: true,
                                 totalRepeatCount: 1,
                                 animatedTexts: [
-                                  TyperAnimatedText(widget.msg.trim()),
+                                  TyperAnimatedText(msg.trim()),
                                 ],
                               ),
                             )
                           : Text(
-                              widget.msg.trim(),
+                              msg.trim(),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w700,
@@ -87,32 +73,19 @@ class _ChatWidgetState extends State<ChatWidget> {
                               ),
                             ),
                 ),
-                widget.chatIndex == 0
+                chatIndex == 0
                     ? const SizedBox.shrink()
                     : Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          BlocConsumer<TextToSpeechBloc, TextToSpeechState>(
-                            listener: (context, state) {
-                              if (state is TextToSpeechMuted) {
-                                setState(() {
-                                  _isSpeaking = false;
-                                });
-                              }
-                              if (state is TextToSpeechSpeaking) {
-                                setState(() {
-                                  _isSpeaking = true;
-                                });
-                              }
-                            },
+                          BlocBuilder<TextToSpeechBloc, TextToSpeechState>(
                             builder: (context, state) {
                               if (state is TextToSpeechSpeaking &&
-                                  widget.messageIndex ==
+                                  messageIndex ==
                                       textToSpeechBloc.currentMessageIndex) {
                                 return InkWell(
                                   onTap: () {
-                                    // widget.lastMessageSpeaking = false;
                                     textToSpeechBloc.add(StopSpeaking());
                                   },
                                   child: const Icon(
@@ -120,19 +93,34 @@ class _ChatWidgetState extends State<ChatWidget> {
                                     color: Colors.white,
                                   ),
                                 );
+                              } else if (state is TextToSpeechSpeaking) {
+                                return InkWell(
+                                  onTap: () {
+                                    textToSpeechBloc.add(StopSpeaking());
+                                    textToSpeechBloc.add(StartSpeaking(
+                                      text: msg,
+                                      messageIndex: messageIndex,
+                                    ));
+                                  },
+                                  child: const Icon(
+                                    Icons.volume_down_outlined,
+                                    color: Colors.white,
+                                  ),
+                                );
+                              } else {
+                                return InkWell(
+                                  onTap: () {
+                                    textToSpeechBloc.add(StartSpeaking(
+                                      text: msg,
+                                      messageIndex: messageIndex,
+                                    ));
+                                  },
+                                  child: const Icon(
+                                    Icons.volume_down_outlined,
+                                    color: Colors.white,
+                                  ),
+                                );
                               }
-                              return InkWell(
-                                onTap: () {
-                                  textToSpeechBloc.add(StartSpeaking(
-                                    text: widget.msg,
-                                    messageIndex: widget.messageIndex,
-                                  ));
-                                },
-                                child: const Icon(
-                                  Icons.volume_down_outlined,
-                                  color: Colors.white,
-                                ),
-                              );
                             },
                           ),
                           const SizedBox(
@@ -140,8 +128,7 @@ class _ChatWidgetState extends State<ChatWidget> {
                           ),
                           InkWell(
                             onTap: () {
-                              Clipboard.setData(
-                                  ClipboardData(text: widget.msg));
+                              Clipboard.setData(ClipboardData(text: msg));
                             },
                             child: const Icon(
                               Icons.copy,
