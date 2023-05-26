@@ -1,3 +1,4 @@
+import 'package:chat_gpt_api/blocks/conversations_bloc/conversation_list_bloc.dart';
 import 'package:chat_gpt_api/blocks/image_bloc/image_bloc.dart';
 import 'package:chat_gpt_api/blocks/text_to_speech_bloc/text_to_speech_bloc.dart';
 import 'package:flutter/material.dart';
@@ -28,6 +29,8 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => BotsBloc()..add(FetchBots())),
+        BlocProvider(
+            create: (_) => ConversationListBloc()..add(FetchConversations())),
         BlocProvider(create: (_) => ModelsBloc()),
         BlocProvider(create: (_) => ImageBloc()),
         BlocProvider(create: (_) => TextToSpeechBloc()),

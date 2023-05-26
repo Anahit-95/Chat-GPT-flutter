@@ -39,7 +39,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
   late SpeechToText speechToText;
   late TextToSpeechBloc textToSpeechBloc;
 
-  List<ChatModel> chatList = [];
+  // List<ChatModel> chatList = [];
 
   DatabaseHelper dbHelper = DatabaseHelper();
 
@@ -52,7 +52,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
     textEditingController = TextEditingController();
     focusNode = FocusNode();
     speechToText = SpeechToText();
-    BlocProvider.of<ChatBloc>(context).add(FetchChat());
+    BlocProvider.of<ChatBloc>(context).add(FetchChat(widget.conversationId));
     textToSpeechBloc = BlocProvider.of<TextToSpeechBloc>(context);
     textToSpeechBloc.initializeTts();
     textToSpeechBloc.add(TtsInitialized());
@@ -169,6 +169,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
   Widget build(BuildContext context) {
     final modelsBloc = BlocProvider.of<ModelsBloc>(context);
     final chatBloc = BlocProvider.of<ChatBloc>(context);
+
     if (conversation == null) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -196,6 +197,16 @@ class _ConversationScreenState extends State<ConversationScreen> {
             ),
           ),
           IconButton(
+            onPressed: () async {
+              await dbHelper.updateMessageList(
+                widget.conversationId!,
+                chatBloc.bot.chatList,
+              );
+              setState(() {});
+            },
+            icon: const Icon(Icons.save_outlined),
+          ),
+          IconButton(
             onPressed: () {
               chatBloc.add(ClearChat());
             },
@@ -217,6 +228,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
           }
         },
         builder: (context, state) {
+          print(state.runtimeType);
           return SafeArea(
             child: Column(
               children: [
@@ -226,17 +238,33 @@ class _ConversationScreenState extends State<ConversationScreen> {
                     size: 18,
                   ),
                 ],
+                // Flexible(
+                //   child: ListView.builder(
+                //     controller: _listScrollController,
+                //     itemCount: conversation!.messages.length,
+                //     itemBuilder: (context, index) {
+                //       return ChatWidget(
+                //         msg: conversation!.messages[index].msg,
+                //         chatIndex: conversation!.messages[index].chatIndex,
+                //         messageIndex: index,
+                //         shouldAnimate:
+                //             conversation!.messages.length - 1 == index,
+                //       );
+                //     },
+                //   ),
+                // ),
                 Flexible(
                   child: ListView.builder(
                     controller: _listScrollController,
-                    itemCount: conversation!.messages.length,
+                    itemCount: chatBloc.bot.chatList.length,
                     itemBuilder: (context, index) {
                       return ChatWidget(
-                        msg: conversation!.messages[index].msg,
-                        chatIndex: conversation!.messages[index].chatIndex,
+                        msg: chatBloc.bot.chatList[index].msg,
+                        chatIndex: chatBloc.bot.chatList[index].chatIndex,
                         messageIndex: index,
+                        // shouldAnimate: _shouldAnimate,
                         shouldAnimate:
-                            conversation!.messages.length - 1 == index,
+                            (chatBloc.bot.chatList.length - 1 == index),
                       );
                     },
                   ),

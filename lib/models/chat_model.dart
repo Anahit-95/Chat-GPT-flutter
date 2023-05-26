@@ -2,30 +2,24 @@
 import 'dart:convert';
 
 class ChatModel {
+  final int? id;
   final String msg;
   final int chatIndex;
 
-  ChatModel({required this.msg, required this.chatIndex});
+  ChatModel({this.id, required this.msg, required this.chatIndex});
 
   factory ChatModel.fromJson(Map<String, dynamic> json) => ChatModel(
+        id: json['id'] != null ? json['id'] as int : null,
         msg: json['msg'],
         chatIndex: json['chatIndex'],
       );
 
-  Map<String, dynamic> toMap(int id) {
+  Map<String, dynamic> toMap(int conversationId) {
     return <String, dynamic>{
-      'conversationId': id,
+      'id': id,
+      'conversationId': conversationId,
       'msg': msg,
       'chatIndex': chatIndex,
     };
   }
-
-  factory ChatModel.fromMap(Map<String, dynamic> map) {
-    return ChatModel(
-      msg: map['msg'] as String,
-      chatIndex: map['chatIndex'] as int,
-    );
-  }
-
-  // String toJson() => json.encode(toMap());
 }

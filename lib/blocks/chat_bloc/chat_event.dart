@@ -7,7 +7,16 @@ abstract class ChatEvent extends Equatable {
   List<Object> get props => [];
 }
 
-class FetchChat extends ChatEvent {}
+// class FetchChat extends ChatEvent {}
+
+class FetchChat extends ChatEvent {
+  final int? id;
+
+  const FetchChat(this.id);
+
+  @override
+  List<Object> get props => [id!];
+}
 
 class AddUserMessage extends ChatEvent {
   final String msg;

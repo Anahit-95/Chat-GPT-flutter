@@ -30,7 +30,7 @@ class _AudioToTextState extends State<AudioToText> {
   @override
   void initState() {
     _listScrollController = ScrollController();
-    BlocProvider.of<ChatBloc>(context).add(FetchChat());
+    BlocProvider.of<ChatBloc>(context).add(FetchChat(null));
     textToSpeechBloc = BlocProvider.of<TextToSpeechBloc>(context);
     textToSpeechBloc.initializeTts();
     textToSpeechBloc.add(TtsInitialized());

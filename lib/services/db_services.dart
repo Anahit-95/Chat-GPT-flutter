@@ -59,18 +59,14 @@ class DatabaseHelper {
     await db.delete('messages', where: 'conversationId = ?', whereArgs: [id]);
   }
 
-  Future<List<Map<String, dynamic>>> getConversationList() async {
+  Future<List<ConversationModel>> getConversationList() async {
     final db = await database;
     final List<Map<String, dynamic>> result = await db.query('conversations');
-    final List<Map<String, dynamic>> conversationList = [];
+    final List<ConversationModel> conversationList = [];
 
     for (var row in result) {
-      final Map<String, dynamic> conversation = {
-        'id': row['id'],
-        'title': row['title'],
-        'type': row['type']
-      };
-      // final String title = row['title'];
+      final ConversationModel conversation = ConversationModel.fromMap(row);
+
       conversationList.add(conversation);
     }
 
@@ -99,14 +95,53 @@ class DatabaseHelper {
     await batch.commit();
   }
 
+  Future<void> updateMessageList(
+      int conversationId, List<ChatModel> chatList) async {
+    final db = await database;
+    final batch = db.batch();
+
+    for (var chat in chatList) {
+      batch.insert(
+          'messages',
+          {
+            'id': chat.id,
+            'conversationId': conversationId,
+            'msg': chat.msg,
+            'chatIndex': chat.chatIndex,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+
+    await batch.commit();
+  }
+
+  // Future<void> updateMessageList(
+  //     int conversationId, List<ChatModel> chatList) async {
+  //   final db = await database;
+
+  //   final oldMessages = await db.query('messages',
+  //       where: 'conversationId = ?', whereArgs: [conversationId]);
+  //   final newMessages = chatList
+  //       .where((chat) => !oldMessages.any((msg) => msg['msg'] == chat.msg));
+
+  //   final batch = db.batch();
+  //   for (var chat in newMessages) {
+  //     batch.insert('messages', chat.toMap(conversationId));
+  //   }
+  //   await batch.commit();
+  // }
+
   Future<List<ChatModel>> getMessagesByConversation(int conversationId) async {
     final db = await database;
     List<Map<String, dynamic>> messages = await db.query('messages',
         where: 'conversationId = ?', whereArgs: [conversationId]);
     List<ChatModel> chatListDB = [];
     for (var row in messages) {
-      ChatModel message =
-          ChatModel(msg: row['msg'], chatIndex: row['chatIndex']);
+      // print(row['id']);
+      // ChatModel message = ChatModel(
+      //     id: row['id'], msg: row['msg'], chatIndex: row['chatIndex']);
+      ChatModel message = ChatModel.fromJson(row);
+      print(message.id);
       chatListDB.add(message);
     }
     return chatListDB;

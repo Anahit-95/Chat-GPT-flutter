@@ -1,9 +1,11 @@
+import 'package:chat_gpt_api/blocks/conversations_bloc/conversation_list_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 
 import '../blocks/bots_bloc/bots_bloc.dart';
 import '../blocks/chat_bloc/chat_bloc.dart';
+import '../constants/constants.dart';
 import '../models/bot_model.dart';
 import '../providers/bots_provider.dart';
 import '../services/assets_manager.dart';
@@ -21,11 +23,11 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   DatabaseHelper dbHelper = DatabaseHelper();
-  List<Map<String, dynamic>> conversations = [];
 
   @override
   void initState() {
     super.initState();
+    // BlocProvider.of<ConversationListBloc>(context).add(FetchConversations());
   }
 
   Bot getBot(String type, List<Bot> botList) {
@@ -36,6 +38,8 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final botsBloc = BlocProvider.of<BotsBloc>(context);
+    final conversationsBloc = BlocProvider.of<ConversationListBloc>(context);
+    // print(conversationsBloc.conversations);
     return Scaffold(
       appBar: AppBar(
         elevation: 2,
@@ -111,91 +115,136 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 20),
               Container(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.7,
-                ),
-                child: FutureBuilder(
-                    future: dbHelper.getConversationList(),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasData) {
-                        conversations = snapshot.data!;
-                        return ListView.builder(
-                            itemCount: conversations.length,
-                            shrinkWrap: true,
-                            physics: const BouncingScrollPhysics(),
-                            itemBuilder: (context, index) {
-                              Bot currentBot = getBot(
-                                conversations[index]['type'],
-                                botsBloc.botList,
-                              );
-                              return Column(
-                                children: [
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: const Color.fromARGB(
-                                          255, 81, 103, 230),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: ListTile(
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => BlocProvider(
-                                              create: (context) =>
-                                                  ChatBloc(bot: currentBot),
-                                              child: ConversationScreen(
-                                                conversationId:
-                                                    conversations[index]['id'],
-                                              ),
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.7,
+                  ),
+                  child:
+                      BlocBuilder<ConversationListBloc, ConversationListState>(
+                    builder: (context, state) {
+                      if (state is ConversationListLoading) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (state is ConversationListError) {
+                        return Text(
+                          state.message,
+                          style: const TextStyle(color: Colors.red),
+                        );
+                      }
+                      return ListView.builder(
+                          itemCount: conversationsBloc.conversations.length,
+                          shrinkWrap: true,
+                          physics: const BouncingScrollPhysics(),
+                          itemBuilder: (context, index) {
+                            Bot currentBot = getBot(
+                              conversationsBloc.conversations[index].type,
+                              botsBloc.botList,
+                            );
+                            return Column(
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color:
+                                        const Color.fromARGB(255, 81, 103, 230),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: ListTile(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => BlocProvider(
+                                            create: (context) =>
+                                                ChatBloc(bot: currentBot),
+                                            child: ConversationScreen(
+                                              conversationId: conversationsBloc
+                                                  .conversations[index].id,
                                             ),
                                           ),
+                                        ),
+                                      );
+                                    },
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 4,
+                                    ),
+                                    trailing: InkWell(
+                                      onTap: () async {
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) {
+                                            return AlertDialog(
+                                              title:
+                                                  const Text('Are you sure?'),
+                                              content: state
+                                                      is ConversationListLoading
+                                                  ? const CircularProgressIndicator(
+                                                      color: btnColor,
+                                                    )
+                                                  : const Text(
+                                                      'Are you sure, you want to delete this conversation?'),
+                                              actions: [
+                                                TextButton(
+                                                    style: TextButton.styleFrom(
+                                                      foregroundColor: btnColor,
+                                                    ),
+                                                    onPressed: () =>
+                                                        Navigator.of(context)
+                                                            .pop(),
+                                                    child:
+                                                        const Text('Cancel')),
+                                                ElevatedButton(
+                                                    style: ElevatedButton
+                                                        .styleFrom(
+                                                      backgroundColor: btnColor,
+                                                    ),
+                                                    onPressed: () async {
+                                                      conversationsBloc.add(
+                                                        DeleteConversation(
+                                                          id: conversationsBloc
+                                                              .conversations[
+                                                                  index]
+                                                              .id,
+                                                        ),
+                                                      );
+                                                      Navigator.of(context)
+                                                          .pop();
+                                                    },
+                                                    child: const Text("Ok")),
+                                              ],
+                                            );
+                                          },
                                         );
                                       },
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 4,
+                                      child: const Icon(
+                                        Icons.highlight_remove,
+                                        color: Colors.white,
                                       ),
-                                      trailing: InkWell(
-                                        onTap: () async {
-                                          await dbHelper.deleteConversation(
-                                              conversations[index]['id']);
-                                          setState(() {});
-                                        },
-                                        child: const Icon(
-                                          Icons.highlight_remove,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                      leading: CircleAvatar(
-                                        backgroundColor: currentBot.color,
-                                        child: Icon(
-                                          currentBot.iconData,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                      title: Text(
-                                        conversations[index]['title'],
-                                        style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w500),
-                                      ),
-                                      subtitle:
-                                          Text(conversations[index]['type']),
                                     ),
+                                    leading: CircleAvatar(
+                                      backgroundColor: currentBot.color,
+                                      child: Icon(
+                                        currentBot.iconData,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    title: Text(
+                                      conversationsBloc
+                                          .conversations[index].title,
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w500),
+                                    ),
+                                    subtitle: Text(conversationsBloc
+                                        .conversations[index].type),
                                   ),
-                                  const SizedBox(height: 8),
-                                ],
-                              );
-                            });
-                      } else if (snapshot.hasError) {
-                        return Text('Error: ${snapshot.error}');
-                      }
-                      return const SizedBox.shrink();
-                    }),
-              ),
+                                ),
+                                const SizedBox(height: 8),
+                              ],
+                            );
+                          });
+                    },
+                  )),
             ],
           ),
         ),

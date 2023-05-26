@@ -10,6 +10,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
 import '../blocks/chat_bloc/chat_bloc.dart';
+import '../blocks/conversations_bloc/conversation_list_bloc.dart';
 import '../blocks/models_bloc/models_bloc.dart';
 import '../providers/chats_provider.dart';
 import '../providers/models_provider.dart';
@@ -49,7 +50,7 @@ class _ChatScreenState extends State<ChatScreen> {
     textEditingController = TextEditingController();
     focusNode = FocusNode();
     speechToText = SpeechToText();
-    BlocProvider.of<ChatBloc>(context).add(FetchChat());
+    BlocProvider.of<ChatBloc>(context).add(FetchChat(null));
     textToSpeechBloc = BlocProvider.of<TextToSpeechBloc>(context);
     textToSpeechBloc.initializeTts();
     textToSpeechBloc.add(TtsInitialized());
@@ -206,21 +207,50 @@ class _ChatScreenState extends State<ChatScreen> {
                         },
                         child: const Text('Cancel'),
                       ),
-                      TextButton(
-                        style: TextButton.styleFrom(foregroundColor: btnColor),
-                        onPressed: () async {
-                          Navigator.of(context).pop();
-                          final conversationId =
-                              await dbHelper.createConversation(
-                            title,
-                            chatBloc.bot.title,
-                          );
-                          await dbHelper.createMessageList(
-                            conversationId,
-                            chatBloc.bot.chatList,
-                          );
+                      BlocListener<ConversationListBloc, ConversationListState>(
+                        listener: (context, state) {
+                          if (state is ConversationListLoaded) {
+                            Navigator.of(context).pushNamed('/');
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: TextWidget(
+                                  label: "Conversation created succesfully",
+                                ),
+                              ),
+                            );
+                          }
+                          if (state is ConversationListError) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: TextWidget(
+                                  label: state.message,
+                                ),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
                         },
-                        child: const Text('OK'),
+                        child: TextButton(
+                          style:
+                              TextButton.styleFrom(foregroundColor: btnColor),
+                          onPressed: () async {
+                            Navigator.of(context).pop();
+                            BlocProvider.of<ConversationListBloc>(context)
+                                .add(CreateConversation(
+                              title: title,
+                              type: chatBloc.bot.title,
+                              chatList: chatBloc.bot.chatList,
+                            ));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: TextWidget(
+                                  label: "Conversation created succesfully.",
+                                ),
+                              ),
+                            );
+                          },
+                          child: const Text('OK'),
+                        ),
                       ),
                     ],
                   );

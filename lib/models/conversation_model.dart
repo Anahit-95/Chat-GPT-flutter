@@ -44,11 +44,7 @@ class ConversationModel {
       id: map['id'] as int,
       title: map['title'] as String,
       type: map['type'] as String,
-      messages: List<ChatModel>.from(
-        (map['messages'] as List<int>).map<ChatModel>(
-          (x) => ChatModel.fromMap(x as Map<String, dynamic>),
-        ),
-      ),
+      messages: [],
     );
   }
 }

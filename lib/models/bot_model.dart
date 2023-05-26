@@ -7,7 +7,7 @@ class Bot {
   final String title;
   final IconData iconData;
   final Color color;
-  final List<ChatModel> chatList;
+  List<ChatModel> chatList;
   final String? systemMessage;
 
   Bot({
