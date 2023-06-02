@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:provider/provider.dart';
 
 import '../blocks/models_bloc/models_bloc.dart';
-import '../models/models_model.dart';
-import '../providers/models_provider.dart';
 import '../widgets/text_widget.dart';
 
 import '../constants/constants.dart';
@@ -75,8 +72,10 @@ class _ModelsDropDownWidgetState extends State<ModelsDropDownWidget> {
                   currentModel = value.toString();
                 });
                 modelsBloc.add(SetCurrentModel(value.toString()));
-                await Future.delayed(const Duration(seconds: 1));
-                Navigator.pop(context);
+                await Future.delayed(
+                  const Duration(seconds: 1),
+                  () => Navigator.pop(context),
+                );
               },
             ),
           );

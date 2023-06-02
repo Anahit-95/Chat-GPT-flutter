@@ -28,3 +28,5 @@ class ConversationError extends ConversationState {
 }
 
 class ConversationWaiting extends ConversationState {}
+
+class ConversationAnimating extends ConversationState {}

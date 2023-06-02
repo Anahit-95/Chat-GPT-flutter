@@ -2,18 +2,15 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 import '../blocks/chat_bloc/chat_bloc.dart';
 import '../blocks/text_to_speech_bloc/text_to_speech_bloc.dart';
-import '../providers/chats_provider.dart';
-import '../services/api_services.dart';
-import '../services/assets_manager.dart';
-import '../widgets/chat_widget.dart';
-import '../widgets/text_widget.dart';
-import '../constants/constants.dart';
+import '../services/services.dart';
+import '../widgets/chat_app_bar.dart';
+import '../widgets/chat_list_widget.dart';
+import '../widgets/send_audio_bar.dart';
 
 class AudioToText extends StatefulWidget {
   const AudioToText({super.key});
@@ -23,17 +20,23 @@ class AudioToText extends StatefulWidget {
 }
 
 class _AudioToTextState extends State<AudioToText> {
+  bool _shouldAnimate = false;
+
   late TextToSpeechBloc textToSpeechBloc;
   late ScrollController _listScrollController;
-  bool _isTyping = false;
+  late ChatBloc chatBloc;
 
   @override
   void initState() {
     _listScrollController = ScrollController();
-    BlocProvider.of<ChatBloc>(context).add(FetchChat(null));
+    chatBloc = BlocProvider.of<ChatBloc>(context);
+    chatBloc.add(FetchChat());
     textToSpeechBloc = BlocProvider.of<TextToSpeechBloc>(context);
     textToSpeechBloc.initializeTts();
     textToSpeechBloc.add(TtsInitialized());
+    if (_listScrollController.hasClients) {
+      scrollListToEnd();
+    }
     super.initState();
   }
 
@@ -53,14 +56,10 @@ class _AudioToTextState extends State<AudioToText> {
   }
 
   Future<void> sendAudioFile({required ChatBloc chatBloc}) async {
-    if (_isTyping) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: TextWidget(
-            label: 'You cant send multiple messages at a time.',
-          ),
-          backgroundColor: Colors.red,
-        ),
+    if (chatBloc.state is ChatWaiting) {
+      Services.errorSnackBar(
+        context: context,
+        errorMessage: 'You cant send multiple messages at a time.',
       );
       return;
     }
@@ -68,140 +67,82 @@ class _AudioToTextState extends State<AudioToText> {
       FilePickerResult? result = await FilePicker.platform.pickFiles();
 
       if (result != null) {
-        setState(() {
-          _isTyping = true;
-          // chatProvider.addUserMessage(
-          //   msg: result.files.single.name,
-          // );
-          chatBloc.add(AddUserMessage(msg: result.files.single.name));
-        });
-        if (chatBloc.bot.title == 'Audio Reader') {
-          await ApiService.convertSpeechToText(result.files.single.path!)
-              .then((value) {
-            setState(() {
-              // chatProvider.addBotMessage(
-              //   msg: value,
-              // );
-              chatBloc.add(AddBotMessage(msg: value));
-            });
-          });
-        } else {
-          await ApiService.translateSpeechToEnglish(result.files.single.path!)
-              .then((value) {
-            setState(() {
-              // chatProvider.addBotMessage(
-              //   msg: value,
-              // );
-              chatBloc.add(AddBotMessage(msg: value));
-            });
-          });
-        }
+        chatBloc.add(AddUserMessage(msg: result.files.single.name));
+        chatBloc.add(AddBotMessage(filePath: result.files.single.path!));
       }
     } catch (error) {
       log("error $error");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: TextWidget(
-            label: error.toString(),
-          ),
-          backgroundColor: Colors.red,
-        ),
+      Services.errorSnackBar(
+        context: context,
+        errorMessage: error.toString(),
       );
     } finally {
-      setState(() {
-        if (mounted) {
-          scrollListToEnd();
-          _isTyping = false;
-        }
-      });
+      if (mounted) {
+        scrollListToEnd();
+      }
     }
+  }
+
+  void deleteMessage(int index) {
+    chatBloc.add(DeleteMessage(
+      msg: chatBloc.bot.chatList[index],
+    ));
+    Navigator.of(context).pop(true);
   }
 
   @override
   Widget build(BuildContext context) {
-    // final chatProvider = Provider.of<ChatProvider>(context);
-    final chatBloc = BlocProvider.of<ChatBloc>(context);
-
     return Scaffold(
-      appBar: AppBar(
-        elevation: 2,
-        title: Text(chatBloc.bot.title),
-        leading: GestureDetector(
-          onTap: () => Navigator.of(context).pushNamed('/'),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Image.asset(AssetsManager.openaiLogo),
-          ),
-        ),
+      appBar: ChatAppBar(
+        title: chatBloc.bot.title,
+        onSave: () async {
+          await Services.saveConversationDialog(
+            context: context,
+            type: chatBloc.bot.title,
+            chatList: chatBloc.bot.chatList,
+          );
+        },
+        onClear: () => chatBloc.add(ClearChat()),
       ),
-      body: BlocBuilder<ChatBloc, ChatState>(
+      body: BlocConsumer<ChatBloc, ChatState>(
+        listener: (context, state) {
+          if (state is ChatError) {
+            Services.errorSnackBar(
+              context: context,
+              errorMessage: state.message,
+            );
+          }
+          if (state is ChatAnimating) {
+            _shouldAnimate = true;
+          }
+          if (state is ChatLoaded) {
+            WidgetsBinding.instance.addPostFrameCallback(
+              (_) => scrollListToEnd(),
+            );
+          }
+        },
         builder: (context, state) {
           return SafeArea(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Flexible(
-                  child: ListView.builder(
-                    controller: _listScrollController,
-                    itemCount: chatBloc.bot.chatList.length,
-                    itemBuilder: (context, index) {
-                      return ChatWidget(
-                        msg: chatBloc.bot.chatList[index].msg,
-                        chatIndex: chatBloc.bot.chatList[index].chatIndex,
-                        messageIndex: index,
-                        shouldAnimate:
-                            chatBloc.bot.chatList.length - 1 == index,
-                      );
-                    },
-                  ),
+                ChatListWidget(
+                  chatList: chatBloc.bot.chatList,
+                  listScrollController: _listScrollController,
+                  shouldAnimate: _shouldAnimate,
+                  deleteMessage: deleteMessage,
                 ),
-                if (_isTyping) ...[
+                if (state is ChatWaiting) ...[
                   const SpinKitThreeBounce(
                     color: Colors.white,
                     size: 18,
                   ),
                 ],
-                Material(
-                  color: cardColor,
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Flexible(
-                          child: Text(
-                            maxLines: 1,
-                            'Choose Audio file to read from hgoiwhegihwoghioweihgohweo...',
-                            style: TextStyle(
-                              color: Colors.white,
-                              overflow: TextOverflow.ellipsis,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: scaffoldBackgroundColor,
-                          ),
-                          onPressed: () async {
-                            await sendAudioFile(chatBloc: chatBloc);
-                          },
-                          child: const Text(
-                            ' Pick File ',
-                            style: TextStyle(
-                              overflow: TextOverflow.ellipsis,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 15,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                SendAudioBar(
+                  sendMessage: () async {
+                    await sendAudioFile(chatBloc: chatBloc);
+                  },
                 ),
               ],
             ),

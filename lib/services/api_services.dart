@@ -178,8 +178,6 @@ class ApiService {
       request.files.add(await http.MultipartFile.fromPath("file", filePath));
 
       var utf8decoder = const Utf8Decoder(allowMalformed: true);
-      // String decodedText = utf8decoder.convert(
-      //     jsonResponse['choices'][index]['message']['content'].codeUnits);
       var response = await request.send();
       var newResponse = await http.Response.fromStream(response);
       final responseData = json.decode(newResponse.body);

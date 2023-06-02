@@ -1,12 +1,11 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
-import 'dart:convert';
 
 import 'chat_model.dart';
 
 class ConversationModel {
-  int id;
-  String title;
-  String type;
+  final int id;
+  final String title;
+  final String type;
   List<ChatModel> messages;
 
   ConversationModel({

@@ -28,3 +28,5 @@ class ChatError extends ChatState {
 }
 
 class ChatWaiting extends ChatState {}
+
+class ChatAnimating extends ChatState {}

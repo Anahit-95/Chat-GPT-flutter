@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 part of 'chat_bloc.dart';
 
 abstract class ChatEvent extends Equatable {
@@ -7,16 +8,7 @@ abstract class ChatEvent extends Equatable {
   List<Object> get props => [];
 }
 
-// class FetchChat extends ChatEvent {}
-
-class FetchChat extends ChatEvent {
-  final int? id;
-
-  const FetchChat(this.id);
-
-  @override
-  List<Object> get props => [id!];
-}
+class FetchChat extends ChatEvent {}
 
 class AddUserMessage extends ChatEvent {
   final String msg;
@@ -28,9 +20,19 @@ class AddUserMessage extends ChatEvent {
 }
 
 class AddBotMessage extends ChatEvent {
-  final String msg;
+  final String filePath;
 
-  const AddBotMessage({required this.msg});
+  const AddBotMessage({required this.filePath});
+
+  @override
+  List<Object> get props => [filePath];
+}
+
+class DeleteMessage extends ChatEvent {
+  final ChatModel msg;
+  const DeleteMessage({
+    required this.msg,
+  });
 
   @override
   List<Object> get props => [msg];

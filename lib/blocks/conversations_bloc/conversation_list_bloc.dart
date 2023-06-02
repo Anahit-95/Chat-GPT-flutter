@@ -25,8 +25,8 @@ class ConversationListBloc
       FetchConversations event, Emitter<ConversationListState> emit) async {
     try {
       emit(ConversationListLoading());
-      conversations = await _dbHelper.getConversationList();
-
+      var fetchedConversations = await _dbHelper.getConversationList();
+      conversations = fetchedConversations.reversed.toList();
       emit(ConversationListLoaded(conversations: conversations));
     } catch (error) {
       emit(ConversationListError('Failed to load conversations: $error'));
@@ -51,7 +51,7 @@ class ConversationListBloc
         type: event.type,
         messages: [],
       );
-      conversations.add(conversation);
+      conversations.insert(0, conversation);
       emit(ConversationListLoaded(conversations: conversations));
     } catch (error) {
       emit(ConversationListError('Something went wrong: $error'));

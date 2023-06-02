@@ -1,9 +1,9 @@
-import 'package:chat_gpt_api/widgets/text_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../blocks/image_bloc/image_bloc.dart';
 import '../constants/constants.dart';
+import '../services/services.dart';
 
 class ImageGenerateWidget extends StatefulWidget {
   const ImageGenerateWidget({super.key});
@@ -179,13 +179,9 @@ class _ImageGenerateWidgetState extends State<ImageGenerateWidget> {
                     ),
                   );
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: TextWidget(
-                        label: 'Please pass the description and size.',
-                      ),
-                      backgroundColor: Colors.red,
-                    ),
+                  Services.errorSnackBar(
+                    context: context,
+                    errorMessage: 'Please pass the description and size.',
                   );
                 }
               },

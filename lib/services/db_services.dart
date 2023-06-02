@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+// import 'package:path/path.dart';
 
 import '../models/chat_model.dart';
 import '../models/conversation_model.dart';
@@ -24,7 +24,8 @@ class DatabaseHelper {
 
   Future<Database> initDatabase() async {
     String databasesPath = await getDatabasesPath();
-    String path = join(databasesPath, 'my_database.db');
+    // String path = join(databasesPath, 'my_database.db');
+    String path = '$databasesPath/my_database.db';
 
     // Open the database
     return await openDatabase(
@@ -47,16 +48,30 @@ class DatabaseHelper {
     return conversationId;
   }
 
-  Future<void> updateConversation(int id, String title) async {
-    final db = await database;
-    await db.update('conversations', {'title': title},
-        where: 'id = ?', whereArgs: [id]);
-  }
+  // Future<void> updateConversation(int id, String title) async {
+  //   final db = await database;
+  //   await db.update('conversations', {'title': title},
+  //       where: 'id = ?', whereArgs: [id]);
+  // }
 
   Future<void> deleteConversation(int id) async {
     final db = await database;
     await db.delete('conversations', where: 'id = ?', whereArgs: [id]);
     await db.delete('messages', where: 'conversationId = ?', whereArgs: [id]);
+  }
+
+  Future<void> deleteMessages(int id) async {
+    final db = await database;
+    await db.delete('messages', where: 'conversationId = ?', whereArgs: [id]);
+  }
+
+  Future<void> deleteMessage(int conversationId, int id) async {
+    final db = await database;
+    await db.delete(
+      'messages',
+      where: 'conversationId = ? AND id = ?',
+      whereArgs: [conversationId, id],
+    );
   }
 
   Future<List<ConversationModel>> getConversationList() async {
@@ -73,15 +88,11 @@ class DatabaseHelper {
     return conversationList;
   }
 
-  // Future<int> createMessage(int conversationId, ChatModel chatModel) async {
-  //   final db = await database;
-  //   final id = await db.insert('messages', {
-  //     'conversationId': conversationId,
-  //     'msg': chatModel.msg,
-  //     'chatIndex': chatModel.chatIndex,
-  //   });
-  //   return id;
-  // }
+  Future<int> createMessage(int conversationId, ChatModel chatModel) async {
+    final db = await database;
+    final id = await db.insert('messages', chatModel.toMap(conversationId));
+    return id;
+  }
 
   Future<void> createMessageList(
       int conversationId, List<ChatModel> chatList) async {
@@ -101,14 +112,7 @@ class DatabaseHelper {
     final batch = db.batch();
 
     for (var chat in chatList) {
-      batch.insert(
-          'messages',
-          {
-            'id': chat.id,
-            'conversationId': conversationId,
-            'msg': chat.msg,
-            'chatIndex': chat.chatIndex,
-          },
+      batch.insert('messages', chat.toMap(conversationId),
           conflictAlgorithm: ConflictAlgorithm.replace);
     }
 
@@ -137,44 +141,41 @@ class DatabaseHelper {
         where: 'conversationId = ?', whereArgs: [conversationId]);
     List<ChatModel> chatListDB = [];
     for (var row in messages) {
-      // print(row['id']);
-      // ChatModel message = ChatModel(
-      //     id: row['id'], msg: row['msg'], chatIndex: row['chatIndex']);
       ChatModel message = ChatModel.fromJson(row);
-      print(message.id);
+      // print(message.id);
       chatListDB.add(message);
     }
     return chatListDB;
   }
 
-  Future<ConversationModel> getConversation(int conversationId) async {
-    final db = await database;
+  // Future<ConversationModel> getConversation(int conversationId) async {
+  //   final db = await database;
 
-    // Retrieve conversation details
-    List<Map<String, dynamic>> conversationResult = await db.query(
-      'conversations',
-      where: 'id = ?',
-      whereArgs: [conversationId],
-    );
+  //   // Retrieve conversation details
+  //   List<Map<String, dynamic>> conversationResult = await db.query(
+  //     'conversations',
+  //     where: 'id = ?',
+  //     whereArgs: [conversationId],
+  //   );
 
-    if (conversationResult.isEmpty) {
-      throw Exception('Conversation not found');
-    }
+  //   if (conversationResult.isEmpty) {
+  //     throw Exception('Conversation not found');
+  //   }
 
-    // Extract conversation details
-    final conversationRow = conversationResult.first;
-    final String title = conversationRow['title'];
-    final String type = conversationRow['type'];
+  //   // Extract conversation details
+  //   final conversationRow = conversationResult.first;
+  //   final String title = conversationRow['title'];
+  //   final String type = conversationRow['type'];
 
-    // Retrieve chat messages
-    List<ChatModel> messages = await getMessagesByConversation(conversationId);
+  //   // Retrieve chat messages
+  //   List<ChatModel> messages = await getMessagesByConversation(conversationId);
 
-    // Create and return ConversationModel object
-    return ConversationModel(
-      id: conversationId,
-      title: title,
-      type: type,
-      messages: messages,
-    );
-  }
+  //   // Create and return ConversationModel object
+  //   return ConversationModel(
+  //     id: conversationId,
+  //     title: title,
+  //     type: type,
+  //     messages: messages,
+  //   );
+  // }
 }

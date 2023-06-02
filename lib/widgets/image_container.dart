@@ -16,6 +16,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../blocks/image_bloc/image_bloc.dart';
 import '../constants/constants.dart';
+import '../services/services.dart';
 import '../widgets/text_widget.dart';
 
 class ImageContainer extends StatefulWidget {
@@ -72,13 +73,9 @@ class _ImageContainerState extends State<ImageContainer> {
       }
     } catch (e) {
       log('Failed to take a screenshot');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: TextWidget(
-            label: 'Failed to take a screenshot.',
-          ),
-          backgroundColor: Colors.red,
-        ),
+      Services.errorSnackBar(
+        context: context,
+        errorMessage: 'Failed to take a screenshot.',
       );
     }
   }
@@ -153,13 +150,9 @@ class _ImageContainerState extends State<ImageContainer> {
         await _cropImage(_croppedFile!.path);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: TextWidget(
-            label: 'Permission denied',
-          ),
-          backgroundColor: Colors.red,
-        ),
+      Services.errorSnackBar(
+        context: context,
+        errorMessage: 'Permission denied.',
       );
     }
   }
@@ -192,44 +185,39 @@ class _ImageContainerState extends State<ImageContainer> {
             await GallerySaver.saveImage(savedFile.path, albumName: foldername);
             completer.complete();
           }));
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Downloaded to $folderPath',
-              ),
-            ),
-          );
+          Future.delayed(Duration.zero, () {
+            Services.confirmSnackBar(
+              context: context,
+              message: 'Downloaded to $folderPath',
+            );
+          });
+
           await completer.future;
         } else {
           await GallerySaver.saveImage(_croppedFile!.path,
               albumName: foldername);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Downloaded to ${_croppedFile!.path}',
-              ),
-            ),
-          );
+          Future.delayed(Duration.zero, () {
+            Services.confirmSnackBar(
+              context: context,
+              message: 'Downloaded to ${_croppedFile!.path}',
+            );
+          });
         }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: TextWidget(
-              label: 'Failed to download.',
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
+        Future.delayed(Duration.zero, () {
+          Services.errorSnackBar(
+            context: context,
+            errorMessage: 'Failed to download.',
+          );
+        });
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: TextWidget(
-            label: 'Permission denied',
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
+      Future.delayed(Duration.zero, () {
+        Services.errorSnackBar(
+          context: context,
+          errorMessage: 'Permission denied.',
+        );
+      });
     }
   }
 
@@ -375,101 +363,6 @@ class _ImageContainerState extends State<ImageContainer> {
   //   }
   // }
 
-  Widget _imageLandscape() {
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: _croppedFile == null
-          ? Container(
-              child: Image.network(
-                imageUrl,
-                fit: BoxFit.contain,
-              ),
-            )
-          : Stack(
-              children: [
-                Container(
-                  constraints: BoxConstraints(
-                    maxHeight: MediaQuery.of(context).size.height * 0.5,
-                  ),
-                  child: Image.file(
-                    File(_croppedFile!.path),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                Positioned(
-                  child: IconButton(
-                    icon: Icon(
-                      Icons.arrow_circle_left_outlined,
-                      color: Colors.grey[500],
-                      size: 30,
-                    ),
-                    onPressed: () {
-                      _croppedFile = null;
-                      setState(() {});
-                      imageCache.clear();
-                    },
-                  ),
-                ),
-              ],
-            ),
-    );
-  }
-
-  Widget _buttonsListLandscape() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        ElevatedButton.icon(
-          icon: const Icon(
-            Icons.download_for_offline_rounded,
-          ),
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.all(8),
-            backgroundColor: btnColor,
-          ),
-          onPressed: () async {
-            await downloadImage();
-          },
-          label: const Text('Download'),
-        ),
-        const SizedBox(height: 12),
-        ElevatedButton.icon(
-          onPressed: () async {
-            await _editImage();
-          },
-          icon: const Icon(Icons.edit),
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.all(8),
-            backgroundColor: btnColor,
-          ),
-          label: const Text('Edit'),
-        ),
-        const SizedBox(height: 12),
-        ElevatedButton.icon(
-          icon: const Icon(
-            Icons.share,
-          ),
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.all(8),
-            backgroundColor: btnColor,
-          ),
-          onPressed: () async {
-            shareImage();
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Image shared'),
-              ),
-            );
-          },
-          label: const Text('Share'),
-        ),
-      ],
-    );
-  }
-
   Widget _loadedImageLandscape() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -579,10 +472,9 @@ class _ImageContainerState extends State<ImageContainer> {
                 ),
                 onPressed: () async {
                   shareImage();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Image shared'),
-                    ),
+                  Services.confirmSnackBar(
+                    context: context,
+                    message: 'Image shared.',
                   );
                 },
               ),
@@ -604,13 +496,9 @@ class _ImageContainerState extends State<ImageContainer> {
       child: BlocConsumer<ImageBloc, ImageState>(
         listener: (context, state) {
           if (state is ImageError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: TextWidget(
-                  label: state.message,
-                ),
-                backgroundColor: Colors.red,
-              ),
+            Services.errorSnackBar(
+              context: context,
+              errorMessage: state.message,
             );
           }
           if (state is ImageLoaded) {
@@ -717,10 +605,9 @@ class _ImageContainerState extends State<ImageContainer> {
                       ),
                       onPressed: () async {
                         shareImage();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Image shared'),
-                          ),
+                        Services.confirmSnackBar(
+                          context: context,
+                          message: 'Image shared.',
                         );
                       },
                       label: const Text('Share'),

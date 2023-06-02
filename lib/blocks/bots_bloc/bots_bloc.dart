@@ -88,7 +88,7 @@ class BotsBloc extends Bloc<BotsEvent, BotsState> {
           Make it correct by english standarts. 
           Return corrected text, even if it is question, don't answer the question.
           You are here for text editing''',
-      color: Colors.yellow,
+      color: const Color.fromARGB(255, 134, 122, 7),
       chatList: [],
     ),
   ];

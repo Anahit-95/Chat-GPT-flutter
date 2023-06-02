@@ -8,14 +8,7 @@ abstract class ConversationEvent extends Equatable {
   List<Object> get props => [];
 }
 
-class FetchConversation extends ConversationEvent {
-  final int id;
-
-  const FetchConversation({required this.id});
-
-  @override
-  List<Object> get props => [id];
-}
+class FetchConversation extends ConversationEvent {}
 
 class UpdateConversation extends ConversationEvent {
   final int id;
@@ -26,16 +19,6 @@ class UpdateConversation extends ConversationEvent {
   });
   @override
   List<Object> get props => [id, chatList];
-}
-
-class ClearMessages extends ConversationEvent {
-  final int id;
-  const ClearMessages({
-    required this.id,
-  });
-
-  @override
-  List<Object> get props => [id];
 }
 
 class AddUserMessage extends ConversationEvent {
@@ -49,12 +32,12 @@ class AddUserMessage extends ConversationEvent {
 }
 
 class AddBotMessage extends ConversationEvent {
-  final String msg;
+  final String filePath;
 
-  const AddBotMessage({required this.msg});
+  const AddBotMessage({required this.filePath});
 
   @override
-  List<Object> get props => [msg];
+  List<Object> get props => [filePath];
 }
 
 class SendMessageAndGetAnswers extends ConversationEvent {
@@ -69,3 +52,17 @@ class SendMessageAndGetAnswers extends ConversationEvent {
   @override
   List<Object> get props => [msg, chosenModelId];
 }
+
+class DeleteMessage extends ConversationEvent {
+  final ChatModel msg;
+  const DeleteMessage({
+    required this.msg,
+  });
+
+  @override
+  List<Object> get props => [msg];
+}
+
+class ClearMessages extends ConversationEvent {}
+
+class UpdateMessageList extends ConversationEvent {}

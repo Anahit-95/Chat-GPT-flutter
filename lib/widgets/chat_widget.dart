@@ -1,9 +1,9 @@
-import 'package:animated_text_kit/animated_text_kit.dart';
-import 'package:chat_gpt_api/blocks/text_to_speech_bloc/text_to_speech_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:animated_text_kit/animated_text_kit.dart';
 
+import '../blocks/text_to_speech_bloc/text_to_speech_bloc.dart';
 import '../services/assets_manager.dart';
 import '../constants/constants.dart';
 import './text_widget.dart';
@@ -64,7 +64,7 @@ class ChatWidget extends StatelessWidget {
                                 ],
                               ),
                             )
-                          : Text(
+                          : SelectableText(
                               msg.trim(),
                               style: const TextStyle(
                                 color: Colors.white,
@@ -140,7 +140,7 @@ class ChatWidget extends StatelessWidget {
               ],
             ),
           ),
-        )
+        ),
       ],
     );
   }

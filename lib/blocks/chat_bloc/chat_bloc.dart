@@ -22,37 +22,19 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<FetchChat>(_onFetchChat);
     on<AddUserMessage>(_onAddUserMessage);
     on<AddBotMessage>(_onAddBotMessage);
+    on<DeleteMessage>(_onDeleteMessage);
     on<ClearChat>(_onClearChat);
     on<SendMessageAndGetAnswers>(_onSendMessageAndGetAnswers);
   }
 
-  // Future<void> _onFetchChat(FetchChat event, Emitter<ChatState> emit) async {
-  //   try {
-  //     emit(ChatLoading());
-  //     await Future.delayed(const Duration(seconds: 1));
-  //     chatList = bot.chatList;
-  //     emit(ChatLoaded(bot: bot));
-  //   } catch (e) {
-  //     emit(const ChatError('Failed to get chat'));
-  //   }
-  // }
-
   Future<void> _onFetchChat(FetchChat event, Emitter<ChatState> emit) async {
-    emit(ChatLoading());
     try {
-      if (event.id != null) {
-        final ConversationModel retrievedConversation =
-            await _dbHelper.getConversation(event.id!);
-        _chatList = retrievedConversation.messages;
-        bot.chatList = _chatList;
-        emit(ChatLoaded(bot: bot));
-      } else {
-        _chatList = bot.chatList;
-        emit(ChatLoaded(bot: bot));
-      }
+      emit(ChatLoading());
+      await Future.delayed(const Duration(seconds: 1));
+      _chatList = bot.chatList;
+      emit(ChatLoaded(bot: bot));
     } catch (e) {
-      _errorMessage = e.toString();
-      emit(ChatError(_errorMessage));
+      emit(const ChatError('Failed to get chat'));
     }
   }
 
@@ -61,8 +43,18 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     emit(ChatLoaded(bot: bot.copyWith(chatList: _chatList)));
   }
 
-  void _onAddBotMessage(AddBotMessage event, Emitter<ChatState> emit) {
-    _chatList.add(ChatModel(msg: event.msg, chatIndex: 1));
+  void _onAddBotMessage(AddBotMessage event, Emitter<ChatState> emit) async {
+    emit(ChatWaiting());
+    if (bot.title == 'Audio Reader') {
+      await ApiService.convertSpeechToText(event.filePath).then(
+        (value) => _chatList.add(ChatModel(msg: value, chatIndex: 1)),
+      );
+    } else {
+      await ApiService.translateSpeechToEnglish(event.filePath).then(
+        (value) => _chatList.add(ChatModel(msg: value, chatIndex: 1)),
+      );
+    }
+    emit(ChatAnimating());
     emit(ChatLoaded(bot: bot.copyWith(chatList: _chatList)));
   }
 
@@ -101,6 +93,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           modelId: event.chosenModelId,
           systemMessage: bot.systemMessage,
         ));
+        emit(ChatAnimating());
       } catch (e) {
         _errorMessage = e.toString();
         emit(ChatError(_errorMessage));
@@ -111,11 +104,18 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           message: event.msg,
           modelId: event.chosenModelId,
         ));
+        emit(ChatAnimating());
       } catch (e) {
         _errorMessage = e.toString();
         emit(ChatError(_errorMessage));
       }
     }
+    emit(ChatLoaded(bot: bot.copyWith(chatList: _chatList)));
+  }
+
+  FutureOr<void> _onDeleteMessage(
+      DeleteMessage event, Emitter<ChatState> emit) {
+    _chatList.remove(event.msg);
     emit(ChatLoaded(bot: bot.copyWith(chatList: _chatList)));
   }
 }

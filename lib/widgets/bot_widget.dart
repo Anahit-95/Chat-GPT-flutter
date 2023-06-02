@@ -84,7 +84,6 @@ class BotWidget extends StatelessWidget {
                 child: Text(
                   bot.title,
                   softWrap: true,
-                  // textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,

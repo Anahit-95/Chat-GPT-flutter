@@ -1,6 +1,3 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
-import 'dart:convert';
-
 class ChatModel {
   final int? id;
   final String msg;
@@ -21,5 +18,17 @@ class ChatModel {
       'msg': msg,
       'chatIndex': chatIndex,
     };
+  }
+
+  ChatModel copyWith({
+    int? id,
+    String? msg,
+    int? chatIndex,
+  }) {
+    return ChatModel(
+      id: id ?? this.id,
+      msg: msg ?? this.msg,
+      chatIndex: chatIndex ?? this.chatIndex,
+    );
   }
 }

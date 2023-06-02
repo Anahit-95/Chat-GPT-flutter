@@ -1,35 +1,27 @@
 import 'dart:developer';
 
-import 'package:avatar_glow/avatar_glow.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
-import '../blocks/chat_bloc/chat_bloc.dart';
+import '../blocks/conversation_bloc/conversation_bloc.dart';
 import '../blocks/models_bloc/models_bloc.dart';
 import '../blocks/text_to_speech_bloc/text_to_speech_bloc.dart';
-import '../constants/constants.dart';
-import '../models/chat_model.dart';
-import '../models/conversation_model.dart';
-import '../services/assets_manager.dart';
-import '../services/db_services.dart';
 import '../services/services.dart';
-import '../widgets/chat_widget.dart';
-import '../widgets/text_widget.dart';
+import '../widgets/chat_app_bar.dart';
+import '../widgets/chat_list_widget.dart';
+import '../widgets/mic_button.dart';
+import '../widgets/send_message_bar.dart';
 
 class ConversationScreen extends StatefulWidget {
-  final int? conversationId;
-
-  const ConversationScreen({super.key, this.conversationId});
-  // const ConversationScreen({super.key, required this.conversationId});
+  const ConversationScreen({super.key});
 
   @override
   State<ConversationScreen> createState() => _ConversationScreenState();
 }
 
 class _ConversationScreenState extends State<ConversationScreen> {
-  bool _isTyping = false;
   bool _isListening = false;
   bool _shouldAnimate = false;
 
@@ -37,13 +29,8 @@ class _ConversationScreenState extends State<ConversationScreen> {
   late ScrollController _listScrollController;
   late FocusNode focusNode;
   late SpeechToText speechToText;
+  late ConversationBloc conversationBloc;
   late TextToSpeechBloc textToSpeechBloc;
-
-  // List<ChatModel> chatList = [];
-
-  DatabaseHelper dbHelper = DatabaseHelper();
-
-  ConversationModel? conversation;
 
   @override
   void initState() {
@@ -52,12 +39,13 @@ class _ConversationScreenState extends State<ConversationScreen> {
     textEditingController = TextEditingController();
     focusNode = FocusNode();
     speechToText = SpeechToText();
-    BlocProvider.of<ChatBloc>(context).add(FetchChat(widget.conversationId));
+    conversationBloc = BlocProvider.of<ConversationBloc>(context);
+    conversationBloc.add(FetchConversation());
     textToSpeechBloc = BlocProvider.of<TextToSpeechBloc>(context);
     textToSpeechBloc.initializeTts();
     textToSpeechBloc.add(TtsInitialized());
-    if (widget.conversationId != null) {
-      fetchConversation(widget.conversationId);
+    if (_listScrollController.hasClients) {
+      scrollListToEnd();
     }
   }
 
@@ -74,92 +62,84 @@ class _ConversationScreenState extends State<ConversationScreen> {
   void scrollListToEnd() {
     _listScrollController.animateTo(
       _listScrollController.position.maxScrollExtent,
-      duration: const Duration(seconds: 2),
+      duration: const Duration(milliseconds: 500),
       curve: Curves.easeOut,
     );
   }
 
-  Future<void> fetchConversation(int? id) async {
-    try {
-      // Fetch the conversation data
-      final retrievedConversation = await dbHelper.getConversation(id!);
-      setState(() {
-        conversation = retrievedConversation;
-      });
-    } catch (error) {
-      // Handle any errors that occur during the data retrieval
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: TextWidget(
-            label: 'Error fetching conversation: $error',
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
-  Future<void> sendMessageFCT(
-      {required ModelsBloc modelsBloc, required ChatBloc chatBloc}) async {
-    if (_isTyping) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: TextWidget(
-            label: 'You cant send multiple messages at a time.',
-          ),
-          backgroundColor: Colors.red,
-        ),
+  Future<void> sendMessageFCT({
+    required ModelsBloc modelsBloc,
+    required ConversationBloc conversationBloc,
+  }) async {
+    if (conversationBloc.state is ConversationWaiting) {
+      Services.errorSnackBar(
+        context: context,
+        errorMessage: 'You cant send multiple messages at a time.',
       );
       return;
     }
     if (textEditingController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: TextWidget(
-            label: 'Please type a message.',
-          ),
-          backgroundColor: Colors.red,
-        ),
+      Services.errorSnackBar(
+        context: context,
+        errorMessage: 'Please type a message.',
       );
       return;
     }
     try {
       String msg = textEditingController.text;
-      setState(() {
-        _isTyping = true;
-        chatBloc.add(AddUserMessage(msg: msg));
-        textEditingController.clear();
-        focusNode.unfocus();
-      });
+      conversationBloc.add(AddUserMessage(msg: msg));
+      textEditingController.clear();
+      focusNode.unfocus();
 
-      final stateStream = BlocProvider.of<ChatBloc>(context).stream;
+      final stateStream = BlocProvider.of<ConversationBloc>(context).stream;
 
-      chatBloc.add(SendMessageAndGetAnswers(
+      conversationBloc.add(SendMessageAndGetAnswers(
         msg: msg,
         chosenModelId: modelsBloc.currentModel,
       ));
 
       await stateStream.firstWhere((state) {
-        return state is ChatLoaded && state.bot.chatList.length % 2 == 0;
+        return state is ConversationLoaded &&
+            state.conversation.messages.last.chatIndex == 1;
       });
 
-      setState(() {
-        _shouldAnimate = true;
-      });
+      var convMessages = conversationBloc.conversation.messages;
 
       Future.delayed(const Duration(milliseconds: 0), () {
         textToSpeechBloc.add(StartSpeaking(
-          messageIndex: chatBloc.bot.chatList.length - 1,
-          text: chatBloc.bot.chatList[chatBloc.bot.chatList.length - 1].msg,
+          messageIndex: convMessages.length - 1,
+          text: convMessages[convMessages.length - 1].msg,
         ));
       });
     } catch (error) {
       log("error $error");
     } finally {
       if (mounted) {
+        scrollListToEnd();
+      }
+    }
+  }
+
+  void deleteMessage(int index) {
+    conversationBloc.add(DeleteMessage(
+      msg: conversationBloc.conversation.messages[index],
+    ));
+    Navigator.of(context).pop(true);
+  }
+
+  Future<void> micListening() async {
+    if (!_isListening) {
+      var available = await speechToText.initialize();
+      if (available) {
         setState(() {
-          scrollListToEnd();
-          _isTyping = false;
+          _isListening = true;
+          speechToText.listen(
+            onResult: (result) {
+              setState(() {
+                textEditingController.text = result.recognizedWords;
+              });
+            },
+          );
         });
       }
     }
@@ -168,187 +148,76 @@ class _ConversationScreenState extends State<ConversationScreen> {
   @override
   Widget build(BuildContext context) {
     final modelsBloc = BlocProvider.of<ModelsBloc>(context);
-    final chatBloc = BlocProvider.of<ChatBloc>(context);
 
-    if (conversation == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
     return Scaffold(
-      appBar: AppBar(
-        elevation: 2,
-        title: Text(conversation!.title),
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: GestureDetector(
-            onTap: () {
-              Navigator.of(context).pushNamed('/');
-            },
-            child: Image.asset(AssetsManager.openaiLogo),
-          ),
-        ),
-        actions: [
-          IconButton(
-            onPressed: () async {
-              await Services.showModalSheet(context: context);
-            },
-            icon: const Icon(
-              Icons.more_vert_rounded,
-              color: Colors.white,
-            ),
-          ),
-          IconButton(
-            onPressed: () async {
-              await dbHelper.updateMessageList(
-                widget.conversationId!,
-                chatBloc.bot.chatList,
-              );
-              setState(() {});
-            },
-            icon: const Icon(Icons.save_outlined),
-          ),
-          IconButton(
-            onPressed: () {
-              chatBloc.add(ClearChat());
-            },
-            icon: const Icon(Icons.delete_outline),
-          ),
-        ],
+      appBar: ChatAppBar(
+        title: conversationBloc.conversation.title,
+        showModels: true,
+        onSave: () async {
+          conversationBloc.add(UpdateMessageList());
+          await conversationBloc.stream.firstWhere((state) {
+            return (state is ConversationLoaded);
+          });
+          Future.delayed(Duration.zero, () {
+            Services.confirmSnackBar(
+              context: context,
+              message: 'Messages saved succesfully.',
+            );
+          });
+        },
+        onClear: () => conversationBloc.add(ClearMessages()),
       ),
-      body: BlocConsumer<ChatBloc, ChatState>(
+      body: BlocConsumer<ConversationBloc, ConversationState>(
         listener: (context, state) {
-          if (state is ChatError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: TextWidget(
-                  label: state.message,
-                ),
-                backgroundColor: Colors.red,
-              ),
+          if (state is ConversationError) {
+            Services.errorSnackBar(
+              context: context,
+              errorMessage: state.message,
+            );
+          }
+          if (state is ConversationAnimating) {
+            _shouldAnimate = true;
+          }
+          if (state is ConversationLoaded) {
+            WidgetsBinding.instance.addPostFrameCallback(
+              (_) => scrollListToEnd(),
             );
           }
         },
         builder: (context, state) {
-          print(state.runtimeType);
+          var conversationMessages = conversationBloc.conversation.messages;
           return SafeArea(
             child: Column(
               children: [
-                if (state is ChatLoading && chatBloc.bot.chatList.isEmpty) ...[
+                if (state is ConversationLoading &&
+                    conversationMessages.isEmpty) ...[
                   const SpinKitThreeBounce(
                     color: Colors.white,
                     size: 18,
                   ),
                 ],
-                // Flexible(
-                //   child: ListView.builder(
-                //     controller: _listScrollController,
-                //     itemCount: conversation!.messages.length,
-                //     itemBuilder: (context, index) {
-                //       return ChatWidget(
-                //         msg: conversation!.messages[index].msg,
-                //         chatIndex: conversation!.messages[index].chatIndex,
-                //         messageIndex: index,
-                //         shouldAnimate:
-                //             conversation!.messages.length - 1 == index,
-                //       );
-                //     },
-                //   ),
-                // ),
-                Flexible(
-                  child: ListView.builder(
-                    controller: _listScrollController,
-                    itemCount: chatBloc.bot.chatList.length,
-                    itemBuilder: (context, index) {
-                      return ChatWidget(
-                        msg: chatBloc.bot.chatList[index].msg,
-                        chatIndex: chatBloc.bot.chatList[index].chatIndex,
-                        messageIndex: index,
-                        // shouldAnimate: _shouldAnimate,
-                        shouldAnimate:
-                            (chatBloc.bot.chatList.length - 1 == index),
-                      );
-                    },
-                  ),
+                ChatListWidget(
+                  chatList: conversationMessages,
+                  listScrollController: _listScrollController,
+                  shouldAnimate: _shouldAnimate,
+                  deleteMessage: deleteMessage,
                 ),
-                if ((state is ChatWaiting) && _isTyping) ...[
+                if (state is ConversationWaiting) ...[
                   const SpinKitThreeBounce(
                     color: Colors.white,
                     size: 18,
                   ),
                 ],
                 const SizedBox(height: 15),
-                Material(
-                  color: cardColor,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            focusNode: focusNode,
-                            style: const TextStyle(
-                              color: Colors.white,
-                            ),
-                            controller: textEditingController,
-                            onSubmitted: (value) async {
-                              await sendMessageFCT(
-                                modelsBloc: modelsBloc,
-                                chatBloc: chatBloc,
-                              );
-                            },
-                            decoration: const InputDecoration.collapsed(
-                              hintText: 'How can I help you?',
-                              hintStyle: TextStyle(
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            IconButton(
-                              onPressed: () async {
-                                if (!_isListening) {
-                                  var available =
-                                      await speechToText.initialize();
-                                  if (available) {
-                                    setState(() {
-                                      _isListening = true;
-                                      speechToText.listen(
-                                        onResult: (result) {
-                                          setState(() {
-                                            textEditingController.text =
-                                                result.recognizedWords;
-                                          });
-                                        },
-                                      );
-                                    });
-                                  }
-                                }
-                              },
-                              icon: const Icon(
-                                Icons.mic,
-                                size: 25,
-                                color: Colors.white,
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () async {
-                                await sendMessageFCT(
-                                  modelsBloc: modelsBloc,
-                                  chatBloc: chatBloc,
-                                );
-                              },
-                              icon: const Icon(
-                                Icons.send,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                SendMessageBar(
+                  textEditingController: textEditingController,
+                  focusNode: focusNode,
+                  micListening: micListening,
+                  sendMessage: () => sendMessageFCT(
+                    modelsBloc: modelsBloc,
+                    conversationBloc: conversationBloc,
                   ),
-                ),
+                )
               ],
             ),
           );
@@ -356,31 +225,14 @@ class _ConversationScreenState extends State<ConversationScreen> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: _isListening
-          ? AvatarGlow(
-              endRadius: 75.0,
-              animate: _isListening,
-              duration: const Duration(milliseconds: 2000),
-              glowColor: Colors.white,
-              repeat: true,
-              repeatPauseDuration: const Duration(milliseconds: 100),
-              showTwoGlows: true,
-              child: GestureDetector(
-                onTap: () async {
-                  setState(() {
-                    _isListening = false;
-                  });
-                  await speechToText.stop();
-                },
-                child: CircleAvatar(
-                  radius: 35,
-                  backgroundColor: scaffoldBackgroundColor,
-                  child: const Icon(
-                    Icons.mic,
-                    color: Colors.deepOrange,
-                    size: 30,
-                  ),
-                ),
-              ),
+          ? MicButton(
+              isListening: _isListening,
+              micStopped: () async {
+                setState(() {
+                  _isListening = false;
+                });
+                await speechToText.stop();
+              },
             )
           : null,
     );
