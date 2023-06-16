@@ -203,12 +203,12 @@ class _ConversationScreenState extends State<ConversationScreen> {
                   deleteMessage: deleteMessage,
                 ),
                 if (state is ConversationWaiting) ...[
-                  const SpinKitThreeBounce(
-                    color: Colors.white,
+                  SpinKitThreeBounce(
+                    color: Theme.of(context).primaryColor,
                     size: 18,
                   ),
                 ],
-                const SizedBox(height: 15),
+                // const SizedBox(height: 15),
                 SendMessageBar(
                   textEditingController: textEditingController,
                   focusNode: focusNode,

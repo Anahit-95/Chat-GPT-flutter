@@ -28,9 +28,27 @@ class ChatWidget extends StatelessWidget {
     return Column(
       children: [
         Material(
-          color: chatIndex == 0 ? scaffoldBackgroundColor : cardColor,
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
+          borderRadius: BorderRadius.only(
+            topRight: const Radius.circular(16),
+            topLeft: const Radius.circular(16),
+            bottomLeft: chatIndex == 0
+                ? const Radius.circular(16)
+                : const Radius.circular(0),
+            bottomRight: chatIndex == 1
+                ? const Radius.circular(16)
+                : const Radius.circular(0),
+          ),
+          color: chatIndex == 0
+              ? cardColor.withOpacity(.2)
+              : Theme.of(context).primaryColor.withOpacity(0.8),
+          child: Container(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * .9,
+            ),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 10.0,
+              vertical: 8,
+            ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -46,13 +64,14 @@ class ChatWidget extends StatelessWidget {
                   child: chatIndex == 0
                       ? TextWidget(
                           label: msg,
+                          color: Colors.black87,
                         )
                       : (shouldAnimate)
                           ? DefaultTextStyle(
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w700,
-                                fontSize: 16,
+                                fontSize: 18,
                               ),
                               child: AnimatedTextKit(
                                 isRepeatingAnimation: false,
@@ -69,7 +88,7 @@ class ChatWidget extends StatelessWidget {
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w700,
-                                fontSize: 16,
+                                fontSize: 18,
                               ),
                             ),
                 ),
@@ -110,10 +129,12 @@ class ChatWidget extends StatelessWidget {
                               } else {
                                 return InkWell(
                                   onTap: () {
-                                    textToSpeechBloc.add(StartSpeaking(
-                                      text: msg,
-                                      messageIndex: messageIndex,
-                                    ));
+                                    textToSpeechBloc.add(
+                                      StartSpeaking(
+                                        text: msg,
+                                        messageIndex: messageIndex,
+                                      ),
+                                    );
                                   },
                                   child: const Icon(
                                     Icons.volume_down_outlined,
@@ -141,6 +162,7 @@ class ChatWidget extends StatelessWidget {
             ),
           ),
         ),
+        const SizedBox(height: 10),
       ],
     );
   }

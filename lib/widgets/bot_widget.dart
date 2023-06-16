@@ -61,37 +61,77 @@ class BotWidget extends StatelessWidget {
             Navigator.of(context).pushReplacementNamed('/');
         }
       },
-      child: Material(
-        elevation: 4,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: bot.color,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Icon(
+      // child: Material(
+      //   elevation: 4,
+      //   borderRadius: BorderRadius.circular(16),
+      //   child: Container(
+      //     padding: const EdgeInsets.all(16),
+      //     decoration: BoxDecoration(
+      //       color: bot.color,
+      //       borderRadius: BorderRadius.circular(16),
+      //     ),
+      //     child: Row(
+      //       mainAxisAlignment: MainAxisAlignment.center,
+      //       crossAxisAlignment: CrossAxisAlignment.center,
+      //       children: [
+      //         Icon(
+      //           bot.iconData,
+      //           size: 25,
+      //           color: Colors.white,
+      //         ),
+      //         const SizedBox(width: 8),
+      //         Expanded(
+      //           child: Text(
+      //             bot.title,
+      //             softWrap: true,
+      //             style: const TextStyle(
+      //               color: Colors.white,
+      //               fontSize: 16,
+      //             ),
+      //           ),
+      //         ),
+      //       ],
+      //     ),
+      //   ),
+      // ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          // color: bot.color,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              offset: const Offset(0, 5),
+              color: Colors.indigo.withOpacity(.2),
+              // color: bot.color.withOpacity(.2),
+              spreadRadius: 2,
+              blurRadius: 5,
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: bot.color,
+                // color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
                 bot.iconData,
-                size: 25,
                 color: Colors.white,
+                // color: bot.color,
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  bot.title,
-                  softWrap: true,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              bot.title,
+              style: Theme.of(context).textTheme.titleMedium,
+              // style: TextStyle(color: Colors.white),
+            )
+          ],
         ),
       ),
     );

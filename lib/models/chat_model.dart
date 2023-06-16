@@ -1,9 +1,15 @@
-class ChatModel {
+import 'package:equatable/equatable.dart';
+
+class ChatModel extends Equatable {
   final int? id;
   final String msg;
   final int chatIndex;
 
-  ChatModel({this.id, required this.msg, required this.chatIndex});
+  const ChatModel({
+    this.id,
+    required this.msg,
+    required this.chatIndex,
+  });
 
   factory ChatModel.fromJson(Map<String, dynamic> json) => ChatModel(
         id: json['id'] != null ? json['id'] as int : null,
@@ -31,4 +37,7 @@ class ChatModel {
       chatIndex: chatIndex ?? this.chatIndex,
     );
   }
+
+  @override
+  List<Object?> get props => [id, msg, chatIndex];
 }

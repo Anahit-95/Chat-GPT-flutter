@@ -16,12 +16,14 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
   final ConversationModel conversation;
   final String? systemMessage;
   List<ChatModel> _messages = [];
-  final DatabaseHelper _dbHelper = DatabaseHelper();
+  final DatabaseHelper _dbHelper;
 
   ConversationBloc({
+    required DatabaseHelper dbHelper,
     required this.conversation,
     required this.systemMessage,
-  }) : super(ConversationLoading()) {
+  })  : _dbHelper = dbHelper,
+        super(ConversationLoading()) {
     on<FetchConversation>(_onFetchConversation);
     on<ClearMessages>(_onClearMessages);
     on<AddUserMessage>(_onAddUserMessage);
@@ -51,14 +53,20 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
 
   FutureOr<void> _onAddUserMessage(
       AddUserMessage event, Emitter<ConversationState> emit) async {
-    int id = await _dbHelper.createMessage(
-        conversation.id, ChatModel(msg: event.msg, chatIndex: 0));
-    ChatModel chat = ChatModel(id: id, msg: event.msg, chatIndex: 0);
-    _messages.add(chat);
-    emit(ConversationLoaded(
-      conversation: conversation.copyWith(messages: _messages),
-    ));
-    emit(ConversationWaiting());
+    try {
+      int id = await _dbHelper.createMessage(
+        conversation.id,
+        ChatModel(msg: event.msg, chatIndex: 0),
+      );
+      ChatModel chat = ChatModel(id: id, msg: event.msg, chatIndex: 0);
+      _messages.add(chat);
+      emit(ConversationLoaded(
+        conversation: conversation.copyWith(messages: _messages),
+      ));
+      emit(ConversationWaiting());
+    } catch (e) {
+      emit(ConversationError('Failed to load message: $e'));
+    }
 
     // _messages.add(ChatModel(msg: event.msg, chatIndex: 0));
     // emit(ConversationLoaded(
@@ -118,11 +126,16 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
 
   FutureOr<void> _onClearMessages(
       ClearMessages event, Emitter<ConversationState> emit) async {
-    await _dbHelper.deleteMessages(conversation.id);
-    _messages.clear();
-    emit(ConversationLoaded(
-      conversation: conversation.copyWith(messages: _messages),
-    ));
+    emit(ConversationWaiting());
+    try {
+      await _dbHelper.deleteMessages(conversation.id);
+      _messages.clear();
+      emit(ConversationLoaded(
+        conversation: conversation.copyWith(messages: _messages),
+      ));
+    } catch (e) {
+      emit(ConversationError('Failed to clear messages from database: $e'));
+    }
   }
 
   Future<void> _onSendMessageAndGetAnswers(
@@ -197,7 +210,7 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
     ));
   }
 
-  FutureOr<void> _onDeleteMessages(
+  Future<void> _onDeleteMessages(
       DeleteMessage event, Emitter<ConversationState> emit) async {
     try {
       emit(ConversationWaiting());

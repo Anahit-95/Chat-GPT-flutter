@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../blocks/models_bloc/models_bloc.dart';
@@ -7,10 +8,15 @@ import '../blocks/conversations_bloc/conversation_list_bloc.dart';
 import '../blocks/image_bloc/image_bloc.dart';
 import '../blocks/text_to_speech_bloc/text_to_speech_bloc.dart';
 
+import './services/db_services.dart';
 import './screens/home_screen.dart';
 import './constants/constants.dart';
+import 'screens/home_page.dart';
 
 void main() {
+  // SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+  //   statusBarColor: Colors.transparent,
+  // ));
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
@@ -26,7 +32,8 @@ class MyApp extends StatelessWidget {
           create: (_) => BotsBloc()..add(FetchBots()),
         ),
         BlocProvider(
-          create: (_) => ConversationListBloc()..add(FetchConversations()),
+          create: (_) => ConversationListBloc(dbHelper: DatabaseHelper())
+            ..add(FetchConversations()),
         ),
         BlocProvider(create: (_) => ModelsBloc()),
         BlocProvider(create: (_) => ImageBloc()),
@@ -36,12 +43,14 @@ class MyApp extends StatelessWidget {
         title: 'GPT Assistant',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          scaffoldBackgroundColor: scaffoldBackgroundColor,
-          appBarTheme: AppBarTheme(
-            color: cardColor,
+          primaryColor: btnColor,
+          // scaffoldBackgroundColor: scaffoldBackgroundColor,
+          scaffoldBackgroundColor: Colors.white,
+          appBarTheme: const AppBarTheme(
+            color: btnColor,
           ),
         ),
-        home: const HomePage(),
+        home: const HomePageDraft(),
       ),
     );
   }

@@ -1,9 +1,11 @@
-class ModelsModel {
+import 'package:equatable/equatable.dart';
+
+class ModelsModel extends Equatable {
   final String id;
   final int created;
   final String root;
 
-  ModelsModel({
+  const ModelsModel({
     required this.id,
     required this.root,
     required this.created,
@@ -18,4 +20,7 @@ class ModelsModel {
   static List<ModelsModel> modelsFromSnapshot(List modelSnapshot) {
     return modelSnapshot.map((data) => ModelsModel.fromJson(data)).toList();
   }
+
+  @override
+  List<Object?> get props => [id, created, root];
 }

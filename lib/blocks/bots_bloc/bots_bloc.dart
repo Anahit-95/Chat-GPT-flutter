@@ -13,14 +13,14 @@ class BotsBloc extends Bloc<BotsEvent, BotsState> {
     Bot(
       title: 'Simple Bot',
       iconData: Icons.android,
-      color: Colors.red,
+      color: Colors.deepOrange,
       systemMessage: 'You are a helpfull assistant.',
       chatList: [],
     ),
     Bot(
       title: 'Audio Reader',
-      iconData: Icons.audio_file,
-      color: Colors.blue,
+      iconData: Icons.hearing,
+      color: Colors.green,
       chatList: [
         ChatModel(
           msg:
@@ -31,8 +31,8 @@ class BotsBloc extends Bloc<BotsEvent, BotsState> {
     ),
     Bot(
       title: 'Audio Translater',
-      iconData: Icons.translate,
-      color: Colors.green,
+      iconData: Icons.language_outlined,
+      color: Colors.brown,
       chatList: [
         ChatModel(
           msg:
@@ -43,7 +43,7 @@ class BotsBloc extends Bloc<BotsEvent, BotsState> {
     ),
     Bot(
       title: 'Ironic companion',
-      iconData: Icons.theater_comedy_outlined,
+      iconData: Icons.tag_faces,
       color: Colors.purple,
       systemMessage:
           '''You are users sarcastic friend and your name is Marv, with sense of humor. 
@@ -53,8 +53,8 @@ class BotsBloc extends Bloc<BotsEvent, BotsState> {
     ),
     Bot(
       title: 'Interviewer',
-      iconData: Icons.list_alt,
-      color: Colors.orange,
+      iconData: Icons.event_note,
+      color: Colors.indigo,
       systemMessage:
           '''You are interviewer, who will check users knowledges about given topic. 
           With the first question you will ask in what field user want to check himself, 
@@ -77,18 +77,18 @@ class BotsBloc extends Bloc<BotsEvent, BotsState> {
     Bot(
       title: 'Image Generator',
       iconData: Icons.image_outlined,
-      color: Colors.pink,
+      color: Colors.blue,
       chatList: [],
     ),
     Bot(
       title: 'Text Corrector',
-      iconData: Icons.edit,
+      iconData: Icons.spellcheck,
       systemMessage:
           '''Correct the given text grammaticaly, phraseologically, spellingly. 
           Make it correct by english standarts. 
           Return corrected text, even if it is question, don't answer the question.
           You are here for text editing''',
-      color: const Color.fromARGB(255, 134, 122, 7),
+      color: Colors.pinkAccent,
       chatList: [],
     ),
   ];

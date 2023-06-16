@@ -1,13 +1,11 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
-import 'package:chat_gpt_api/models/conversation_model.dart';
 import 'package:equatable/equatable.dart';
 
 import '../../models/bot_model.dart';
 import '../../models/chat_model.dart';
 import '../../services/api_services.dart';
-import '../../services/db_services.dart';
 
 part 'chat_event.dart';
 part 'chat_state.dart';
@@ -16,7 +14,6 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   final Bot bot;
   List<ChatModel> _chatList = [];
   String _errorMessage = '';
-  final DatabaseHelper _dbHelper = DatabaseHelper();
 
   ChatBloc({required this.bot}) : super(ChatLoading()) {
     on<FetchChat>(_onFetchChat);
@@ -30,8 +27,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   Future<void> _onFetchChat(FetchChat event, Emitter<ChatState> emit) async {
     try {
       emit(ChatLoading());
-      await Future.delayed(const Duration(seconds: 1));
       _chatList = bot.chatList;
+      await Future.delayed(const Duration(seconds: 1));
       emit(ChatLoaded(bot: bot));
     } catch (e) {
       emit(const ChatError('Failed to get chat'));
@@ -39,27 +36,37 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   }
 
   void _onAddUserMessage(AddUserMessage event, Emitter<ChatState> emit) {
-    _chatList.add(ChatModel(msg: event.msg, chatIndex: 0));
-    emit(ChatLoaded(bot: bot.copyWith(chatList: _chatList)));
+    try {
+      _chatList.add(ChatModel(msg: event.msg, chatIndex: 0));
+      emit(ChatLoaded(bot: bot.copyWith(chatList: _chatList)));
+    } catch (e) {
+      emit(const ChatError('Something went wrong. Failed to add message'));
+    }
   }
 
   void _onAddBotMessage(AddBotMessage event, Emitter<ChatState> emit) async {
-    emit(ChatWaiting());
-    if (bot.title == 'Audio Reader') {
-      await ApiService.convertSpeechToText(event.filePath).then(
-        (value) => _chatList.add(ChatModel(msg: value, chatIndex: 1)),
-      );
-    } else {
-      await ApiService.translateSpeechToEnglish(event.filePath).then(
-        (value) => _chatList.add(ChatModel(msg: value, chatIndex: 1)),
-      );
+    try {
+      emit(ChatWaiting());
+      if (bot.title == 'Audio Reader') {
+        await ApiService.convertSpeechToText(event.filePath).then(
+          (value) => _chatList.add(ChatModel(msg: value, chatIndex: 1)),
+        );
+      } else {
+        await ApiService.translateSpeechToEnglish(event.filePath).then(
+          (value) => _chatList.add(ChatModel(msg: value, chatIndex: 1)),
+        );
+      }
+      emit(ChatAnimating());
+      emit(ChatLoaded(bot: bot.copyWith(chatList: _chatList)));
+    } catch (e) {
+      emit(ChatError('Failed to send message: $e'));
     }
-    emit(ChatAnimating());
-    emit(ChatLoaded(bot: bot.copyWith(chatList: _chatList)));
   }
 
-  FutureOr<void> _onClearChat(ClearChat event, Emitter<ChatState> emit) {
+  FutureOr<void> _onClearChat(ClearChat event, Emitter<ChatState> emit) async {
+    emit(ChatWaiting());
     _chatList.clear();
+
     emit(ChatLoaded(bot: bot.copyWith(chatList: _chatList)));
   }
 
@@ -115,6 +122,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   FutureOr<void> _onDeleteMessage(
       DeleteMessage event, Emitter<ChatState> emit) {
+    emit(ChatWaiting());
     _chatList.remove(event.msg);
     emit(ChatLoaded(bot: bot.copyWith(chatList: _chatList)));
   }

@@ -22,15 +22,21 @@ class ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      elevation: 2,
+      elevation: 0,
       title: Text(title),
       leading: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.only(
+          left: 10.0,
+          bottom: 5.0,
+        ),
         child: GestureDetector(
           onTap: () {
             Navigator.of(context).pushNamed('/');
           },
-          child: Image.asset(AssetsManager.openaiLogo),
+          child: CircleAvatar(
+            backgroundImage: AssetImage(AssetsManager.openaiLogo),
+            radius: 30,
+          ),
         ),
       ),
       actions: [

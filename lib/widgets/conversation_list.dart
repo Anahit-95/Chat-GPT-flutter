@@ -19,36 +19,48 @@ class ConversationList extends StatelessWidget {
     final botsBloc = BlocProvider.of<BotsBloc>(context);
     final conversationsBloc = BlocProvider.of<ConversationListBloc>(context);
     return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.7,
-      ),
-      child: BlocBuilder<ConversationListBloc, ConversationListState>(
-        builder: (context, state) {
-          if (state is ConversationListLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (state is ConversationListError) {
-            return Text(
-              state.message,
-              style: const TextStyle(color: Colors.red),
+      color: Theme.of(context).primaryColor,
+      child: Container(
+        // color: Colors.white,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          // color: scaffoldBackgroundColor,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(80),
+          ),
+        ),
+        constraints: BoxConstraints(
+            // maxHeight: MediaQuery.of(context).size.height * 0.7,
+            ),
+        child: BlocBuilder<ConversationListBloc, ConversationListState>(
+          builder: (context, state) {
+            if (state is ConversationListLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (state is ConversationListError) {
+              return Text(
+                state.message,
+                style: const TextStyle(color: Colors.red),
+              );
+            }
+            return ListView.builder(
+              padding: EdgeInsets.symmetric(horizontal: 18, vertical: 25),
+              itemCount: conversationsBloc.conversations.length,
+              shrinkWrap: true,
+              physics: const BouncingScrollPhysics(),
+              itemBuilder: (context, index) {
+                Bot currentBot = getBot(
+                  conversationsBloc.conversations[index].type,
+                  botsBloc.botList,
+                );
+                return ConversationItem(
+                  conversation: conversationsBloc.conversations[index],
+                  currentBot: currentBot,
+                );
+              },
             );
-          }
-          return ListView.builder(
-            itemCount: conversationsBloc.conversations.length,
-            shrinkWrap: true,
-            physics: const BouncingScrollPhysics(),
-            itemBuilder: (context, index) {
-              Bot currentBot = getBot(
-                conversationsBloc.conversations[index].type,
-                botsBloc.botList,
-              );
-              return ConversationItem(
-                conversation: conversationsBloc.conversations[index],
-                currentBot: currentBot,
-              );
-            },
-          );
-        },
+          },
+        ),
       ),
     );
   }

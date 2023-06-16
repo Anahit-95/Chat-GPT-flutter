@@ -1,3 +1,4 @@
+import 'package:chat_gpt_api/services/db_services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -32,8 +33,16 @@ class ConversationItem extends StatelessWidget {
       children: [
         Container(
           decoration: BoxDecoration(
-            color: const Color.fromARGB(255, 81, 103, 230),
+            color: Colors.white,
             borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                offset: const Offset(0, 5),
+                color: Colors.indigo.withOpacity(.2),
+                spreadRadius: 2,
+                blurRadius: 5,
+              ),
+            ],
           ),
           child: ListTile(
             onTap: () {
@@ -42,6 +51,7 @@ class ConversationItem extends StatelessWidget {
                 MaterialPageRoute(
                   builder: (context) => BlocProvider(
                     create: (context) => ConversationBloc(
+                      dbHelper: DatabaseHelper(),
                       conversation: conversation,
                       systemMessage: currentBot.systemMessage,
                     ),
@@ -69,9 +79,9 @@ class ConversationItem extends StatelessWidget {
                   },
                 );
               },
-              child: const Icon(
+              child: Icon(
                 Icons.highlight_remove,
-                color: Colors.white,
+                color: Theme.of(context).primaryColor.withOpacity(0.4),
               ),
             ),
             leading: CircleAvatar(
@@ -84,14 +94,14 @@ class ConversationItem extends StatelessWidget {
             title: Text(
               conversation.title,
               style: const TextStyle(
-                  color: Colors.white,
+                  // color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.w500),
             ),
             subtitle: Text(conversation.type),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 18),
       ],
     );
   }

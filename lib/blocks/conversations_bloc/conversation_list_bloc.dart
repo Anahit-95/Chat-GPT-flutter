@@ -13,9 +13,11 @@ part 'conversation_list_state.dart';
 class ConversationListBloc
     extends Bloc<ConversationListEvent, ConversationListState> {
   List<ConversationModel> conversations = [];
-  final DatabaseHelper _dbHelper = DatabaseHelper();
+  final DatabaseHelper _dbHelper;
 
-  ConversationListBloc() : super(ConversationListLoading()) {
+  ConversationListBloc({required DatabaseHelper dbHelper})
+      : _dbHelper = dbHelper,
+        super(ConversationListLoading()) {
     on<FetchConversations>(_onFetchConversations);
     on<CreateConversation>(_onCreateConversation);
     on<DeleteConversation>(_onDeleteConversation);
@@ -23,8 +25,8 @@ class ConversationListBloc
 
   Future<void> _onFetchConversations(
       FetchConversations event, Emitter<ConversationListState> emit) async {
+    emit(ConversationListLoading());
     try {
-      emit(ConversationListLoading());
       var fetchedConversations = await _dbHelper.getConversationList();
       conversations = fetchedConversations.reversed.toList();
       emit(ConversationListLoaded(conversations: conversations));
@@ -60,8 +62,8 @@ class ConversationListBloc
 
   Future<void> _onDeleteConversation(
       DeleteConversation event, Emitter<ConversationListState> emit) async {
+    emit(ConversationListLoading());
     try {
-      emit(ConversationListLoading());
       await _dbHelper.deleteConversation(event.id);
       conversations.removeWhere((conversation) => conversation.id == event.id);
       emit(ConversationListLoaded(conversations: conversations));

@@ -20,8 +20,8 @@ class ModelsBloc extends Bloc<ModelsEvent, ModelsState> {
 
   Future<void> _fetchModels(
       FetchModels event, Emitter<ModelsState> emit) async {
+    emit(ModelsLoading());
     if (modelsList.isEmpty) {
-      emit(ModelsLoading());
       try {
         modelsList = await ApiService.getModels();
         emit(ModelsLoaded(modelsList, currentModel));
