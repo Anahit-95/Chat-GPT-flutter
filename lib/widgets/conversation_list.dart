@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 import '../blocks/bots_bloc/bots_bloc.dart';
 import '../blocks/conversations_bloc/conversation_list_bloc.dart';
@@ -29,13 +30,18 @@ class ConversationList extends StatelessWidget {
             topLeft: Radius.circular(80),
           ),
         ),
-        constraints: BoxConstraints(
-            // maxHeight: MediaQuery.of(context).size.height * 0.7,
-            ),
         child: BlocBuilder<ConversationListBloc, ConversationListState>(
           builder: (context, state) {
             if (state is ConversationListLoading) {
-              return const Center(child: CircularProgressIndicator());
+              return SizedBox(
+                height: 200,
+                child: Center(
+                  child: SpinKitFadingCircle(
+                    color: Theme.of(context).primaryColor.withOpacity(.8),
+                    size: 50,
+                  ),
+                ),
+              );
             }
             if (state is ConversationListError) {
               return Text(
@@ -44,7 +50,10 @@ class ConversationList extends StatelessWidget {
               );
             }
             return ListView.builder(
-              padding: EdgeInsets.symmetric(horizontal: 18, vertical: 25),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 18,
+                vertical: 25,
+              ),
               itemCount: conversationsBloc.conversations.length,
               shrinkWrap: true,
               physics: const BouncingScrollPhysics(),

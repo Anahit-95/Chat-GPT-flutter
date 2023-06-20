@@ -102,7 +102,7 @@ class BotWidget extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               offset: const Offset(0, 5),
-              color: Colors.indigo.withOpacity(.2),
+              color: Theme.of(context).primaryColor.withOpacity(.2),
               // color: bot.color.withOpacity(.2),
               spreadRadius: 2,
               blurRadius: 5,
@@ -126,11 +126,9 @@ class BotWidget extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            Text(
-              bot.title,
-              style: Theme.of(context).textTheme.titleMedium,
-              // style: TextStyle(color: Colors.white),
-            )
+            Text(bot.title, style: Theme.of(context).textTheme.titleMedium!
+                // .copyWith(color: Colors.white),
+                )
           ],
         ),
       ),

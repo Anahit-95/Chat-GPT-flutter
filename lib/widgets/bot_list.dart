@@ -1,8 +1,9 @@
-import 'package:chat_gpt_api/constants/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 import '../blocks/bots_bloc/bots_bloc.dart';
+import '../constants/constants.dart';
 import 'bot_widget.dart';
 
 class BotList extends StatelessWidget {
@@ -15,8 +16,14 @@ class BotList extends StatelessWidget {
     return BlocBuilder<BotsBloc, BotsState>(
       builder: (context, state) {
         if (state is BotsLoading) {
-          return const Center(
-            child: CircularProgressIndicator(),
+          SizedBox(
+            height: 200,
+            child: Center(
+              child: SpinKitFadingCircle(
+                color: Theme.of(context).primaryColor.withOpacity(.8),
+                size: 50,
+              ),
+            ),
           );
         }
         if (state is BotsLoaded) {

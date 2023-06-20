@@ -52,26 +52,39 @@ class _HomePageDraftState extends State<HomePageDraft> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: buildPageView(),
-      bottomNavigationBar: BottomNavigationBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        // backgroundColor: scaffoldBackgroundColor,
-        selectedItemColor: Theme.of(context).primaryColor,
-        unselectedItemColor: Theme.of(context).primaryColor.withOpacity(.4),
-        currentIndex: _selectedPageIndex,
-        onTap: (index) {
-          bottomTapped(index);
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            label: 'Assistants',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.chat_bubble_2),
-            label: 'Conversations',
-          )
-        ],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              offset: const Offset(0, -0.5),
+              color: Colors.indigo.withOpacity(.1),
+              spreadRadius: 0.5,
+              blurRadius: 4,
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          elevation: 0,
+          backgroundColor: Colors.white,
+          // backgroundColor: scaffoldBackgroundColor,
+          selectedItemColor: Theme.of(context).primaryColor,
+          unselectedItemColor: Theme.of(context).primaryColor.withOpacity(.4),
+          currentIndex: _selectedPageIndex,
+          onTap: (index) {
+            bottomTapped(index);
+          },
+
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline),
+              label: 'Assistants',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.chat_bubble_2),
+              label: 'Conversations',
+            )
+          ],
+        ),
       ),
     );
   }
@@ -113,8 +126,9 @@ class BotPage extends StatelessWidget {
                         ?.copyWith(color: Colors.white54),
                   ),
                   trailing: CircleAvatar(
+                    backgroundColor: Colors.indigo,
                     radius: 30,
-                    backgroundImage: AssetImage(AssetsManager.openaiLogo),
+                    backgroundImage: AssetImage(AssetsManager.botPicture),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -163,8 +177,9 @@ class ConversationListPage extends StatelessWidget {
                       ?.copyWith(color: Colors.white54),
                 ),
                 trailing: CircleAvatar(
+                  backgroundColor: Colors.indigo,
                   radius: 30,
-                  backgroundImage: AssetImage(AssetsManager.openaiLogo),
+                  backgroundImage: AssetImage(AssetsManager.botPicture),
                 ),
               ),
               const SizedBox(height: 20),

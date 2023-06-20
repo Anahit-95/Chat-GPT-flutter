@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../constants/constants.dart';
 import '../models/chat_model.dart';
 import '../services/services.dart';
 import 'chat_widget.dart';
@@ -22,41 +23,46 @@ class ChatListWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Flexible(
       child: ListView.builder(
-        padding: EdgeInsets.all(8),
+        padding: const EdgeInsets.all(8),
         controller: listScrollController,
         itemCount: chatList.length,
         itemBuilder: (context, index) {
-          return Align(
-            alignment: chatList[index].chatIndex == 0
-                ? Alignment.centerRight
-                : Alignment.centerLeft,
-            child: Dismissible(
-              background: Container(
-                color: Colors.red,
-                alignment: Alignment.centerRight,
-                child: const Icon(
-                  Icons.delete_rounded,
-                  color: Colors.white,
-                  size: 40,
+          return Dismissible(
+            background: Column(
+              children: [
+                Flexible(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      color: cardColor.withOpacity(.4),
+                    ),
+                    alignment: Alignment.centerRight,
+                    child: const Icon(
+                      Icons.delete_rounded,
+                      color: Colors.white,
+                      size: 40,
+                    ),
+                  ),
                 ),
-              ),
-              key: ValueKey(chatList[index].id ?? DateTime.now()),
-              direction: DismissDirection.endToStart,
-              confirmDismiss: (direction) async {
-                await Services.confirmActionDialog(
-                  context: context,
-                  title: 'Delete message?',
-                  content: 'Are you sure you want to delete this message?',
-                  onConfirm: () => deleteMessage(index),
-                );
-                return null;
-              },
-              child: ChatWidget(
-                msg: chatList[index].msg,
-                chatIndex: chatList[index].chatIndex,
-                messageIndex: index,
-                shouldAnimate: (chatList.length - 1 == index && shouldAnimate),
-              ),
+                const SizedBox(height: 10),
+              ],
+            ),
+            key: ValueKey(chatList[index].id ?? DateTime.now()),
+            direction: DismissDirection.endToStart,
+            confirmDismiss: (direction) async {
+              await Services.confirmActionDialog(
+                context: context,
+                title: 'Delete message?',
+                content: 'Are you sure you want to delete this message?',
+                onConfirm: () => deleteMessage(index),
+              );
+              return null;
+            },
+            child: ChatWidget(
+              msg: chatList[index].msg,
+              chatIndex: chatList[index].chatIndex,
+              messageIndex: index,
+              shouldAnimate: (chatList.length - 1 == index && shouldAnimate),
             ),
           );
         },

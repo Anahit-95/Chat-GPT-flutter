@@ -34,8 +34,13 @@ class ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
             Navigator.of(context).pushNamed('/');
           },
           child: CircleAvatar(
-            backgroundImage: AssetImage(AssetsManager.openaiLogo),
+            backgroundColor: Colors.indigo,
+            // backgroundImage: AssetImage(AssetsManager.botPicture),
             radius: 30,
+            child: Padding(
+              padding: const EdgeInsets.all(2.0),
+              child: Image.asset(AssetsManager.botPicture),
+            ),
           ),
         ),
       ),

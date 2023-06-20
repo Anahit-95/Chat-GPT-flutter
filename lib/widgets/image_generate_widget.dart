@@ -38,12 +38,16 @@ class _ImageGenerateWidgetState extends State<ImageGenerateWidget> {
         Container(
           height: 46,
           padding: const EdgeInsets.symmetric(
-            horizontal: 16,
+            horizontal: 10,
             vertical: 2,
           ),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.black.withOpacity(.2),
+              width: 1,
+            ),
           ),
           child: TextFormField(
             controller: textController,
@@ -57,15 +61,22 @@ class _ImageGenerateWidgetState extends State<ImageGenerateWidget> {
         Container(
           height: 46,
           padding: const EdgeInsets.symmetric(
-            horizontal: 8,
+            horizontal: 10,
             vertical: 2,
           ),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.black.withOpacity(.2),
+              width: 1,
+            ),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton(
+              borderRadius: const BorderRadius.all(
+                Radius.circular(20.0),
+              ),
               icon: const Icon(
                 Icons.expand_more,
                 color: btnColor,
@@ -114,6 +125,10 @@ class _ImageGenerateWidgetState extends State<ImageGenerateWidget> {
                         ),
                         decoration: BoxDecoration(
                           color: Colors.white,
+                          border: Border.all(
+                            color: Colors.black.withOpacity(.2),
+                            width: 1,
+                          ),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: TextFormField(
@@ -135,9 +150,16 @@ class _ImageGenerateWidgetState extends State<ImageGenerateWidget> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.black.withOpacity(.2),
+                          width: 1,
+                        ),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton(
+                          borderRadius: const BorderRadius.all(
+                            Radius.circular(20.0),
+                          ),
                           icon: const Icon(
                             Icons.expand_more,
                             color: btnColor,

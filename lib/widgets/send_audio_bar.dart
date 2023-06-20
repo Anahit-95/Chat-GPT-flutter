@@ -11,10 +11,21 @@ class SendAudioBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: cardColor,
+    return Container(
+      // color: cardColor,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            offset: const Offset(0, -1),
+            color: Colors.indigo.withOpacity(.2),
+            spreadRadius: 1,
+            blurRadius: 10,
+          ),
+        ],
+      ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -23,7 +34,7 @@ class SendAudioBar extends StatelessWidget {
                 maxLines: 1,
                 'Choose Audio file to read from',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Colors.grey,
                   overflow: TextOverflow.ellipsis,
                   fontWeight: FontWeight.w700,
                   fontSize: 16,
@@ -32,13 +43,13 @@ class SendAudioBar extends StatelessWidget {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: scaffoldBackgroundColor,
+                backgroundColor: Theme.of(context).primaryColor,
               ),
               onPressed: () async {
                 await sendMessage();
               },
               child: const Text(
-                ' Pick File ',
+                'Pick File',
                 style: TextStyle(
                   overflow: TextOverflow.ellipsis,
                   color: Colors.white,

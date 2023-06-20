@@ -27,143 +27,322 @@ class ChatWidget extends StatelessWidget {
     final textToSpeechBloc = BlocProvider.of<TextToSpeechBloc>(context);
     return Column(
       children: [
-        Material(
-          borderRadius: BorderRadius.only(
-            topRight: const Radius.circular(16),
-            topLeft: const Radius.circular(16),
-            bottomLeft: chatIndex == 0
-                ? const Radius.circular(16)
-                : const Radius.circular(0),
-            bottomRight: chatIndex == 1
-                ? const Radius.circular(16)
-                : const Radius.circular(0),
-          ),
-          color: chatIndex == 0
-              ? cardColor.withOpacity(.2)
-              : Theme.of(context).primaryColor.withOpacity(0.8),
-          child: Container(
-            constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * .9,
-            ),
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10.0,
-              vertical: 8,
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Image.asset(
-                  chatIndex == 0
-                      ? AssetsManager.userImage
-                      : AssetsManager.botImage,
-                  height: 30,
-                  width: 30,
+        Row(
+          mainAxisAlignment:
+              chatIndex == 0 ? MainAxisAlignment.end : MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            if (chatIndex == 1)
+              Image.asset(
+                AssetsManager.botImage,
+                height: 30,
+                width: 30,
+              ),
+            if (chatIndex == 1) const SizedBox(width: 4),
+            IntrinsicWidth(
+              stepWidth: 0,
+              child: Container(
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width * .8,
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: chatIndex == 0
-                      ? TextWidget(
-                          label: msg,
-                          color: Colors.black87,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12.0,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  gradient: chatIndex == 1
+                      ? LinearGradient(
+                          colors: [
+                            btnColor.withOpacity(.8),
+                            btnColor,
+                            Colors.indigo
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomRight,
                         )
-                      : (shouldAnimate)
-                          ? DefaultTextStyle(
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 18,
-                              ),
-                              child: AnimatedTextKit(
-                                isRepeatingAnimation: false,
-                                repeatForever: false,
-                                displayFullTextOnTap: true,
-                                totalRepeatCount: 1,
-                                animatedTexts: [
-                                  TyperAnimatedText(msg.trim()),
-                                ],
-                              ),
-                            )
-                          : SelectableText(
-                              msg.trim(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 18,
-                              ),
-                            ),
+                      : null,
+                  color: chatIndex == 0 ? cardColor.withOpacity(.2) : null,
+                  borderRadius: BorderRadius.only(
+                    topRight: const Radius.circular(20),
+                    topLeft: const Radius.circular(20),
+                    bottomLeft: chatIndex == 0
+                        ? const Radius.circular(20)
+                        : const Radius.circular(0),
+                    bottomRight: chatIndex == 1
+                        ? const Radius.circular(20)
+                        : const Radius.circular(0),
+                  ),
                 ),
-                chatIndex == 0
-                    ? const SizedBox.shrink()
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          BlocBuilder<TextToSpeechBloc, TextToSpeechState>(
-                            builder: (context, state) {
-                              if (state is TextToSpeechSpeaking &&
-                                  messageIndex ==
-                                      textToSpeechBloc.currentMessageIndex) {
-                                return InkWell(
-                                  onTap: () {
-                                    textToSpeechBloc.add(StopSpeaking());
-                                  },
-                                  child: const Icon(
-                                    Icons.volume_up,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Flexible(
+                      child: chatIndex == 0
+                          ? TextWidget(
+                              label: msg,
+                              color: Colors.black87,
+                            )
+                          : (shouldAnimate)
+                              ? DefaultTextStyle(
+                                  style: const TextStyle(
                                     color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 18,
                                   ),
-                                );
-                              } else if (state is TextToSpeechSpeaking) {
-                                return InkWell(
-                                  onTap: () {
-                                    textToSpeechBloc.add(StopSpeaking());
-                                    textToSpeechBloc.add(StartSpeaking(
-                                      text: msg,
-                                      messageIndex: messageIndex,
-                                    ));
-                                  },
-                                  child: const Icon(
-                                    Icons.volume_down_outlined,
+                                  child: AnimatedTextKit(
+                                    isRepeatingAnimation: false,
+                                    repeatForever: false,
+                                    displayFullTextOnTap: true,
+                                    totalRepeatCount: 1,
+                                    animatedTexts: [
+                                      TyperAnimatedText(msg.trim()),
+                                    ],
+                                  ),
+                                )
+                              : SelectableText(
+                                  msg.trim(),
+                                  style: const TextStyle(
                                     color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 18,
                                   ),
-                                );
-                              } else {
-                                return InkWell(
-                                  onTap: () {
-                                    textToSpeechBloc.add(
-                                      StartSpeaking(
-                                        text: msg,
-                                        messageIndex: messageIndex,
+                                ),
+                    ),
+                    chatIndex == 0
+                        ? const SizedBox.shrink()
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              BlocBuilder<TextToSpeechBloc, TextToSpeechState>(
+                                builder: (context, state) {
+                                  if (state is TextToSpeechSpeaking &&
+                                      messageIndex ==
+                                          textToSpeechBloc
+                                              .currentMessageIndex) {
+                                    return InkWell(
+                                      onTap: () {
+                                        textToSpeechBloc.add(StopSpeaking());
+                                      },
+                                      child: const Icon(
+                                        Icons.volume_up,
+                                        color: Colors.white,
                                       ),
                                     );
-                                  },
-                                  child: const Icon(
-                                    Icons.volume_down_outlined,
-                                    color: Colors.white,
-                                  ),
-                                );
-                              }
-                            },
+                                  } else if (state is TextToSpeechSpeaking) {
+                                    return InkWell(
+                                      onTap: () {
+                                        textToSpeechBloc.add(StopSpeaking());
+                                        textToSpeechBloc.add(StartSpeaking(
+                                          text: msg,
+                                          messageIndex: messageIndex,
+                                        ));
+                                      },
+                                      child: const Icon(
+                                        Icons.volume_down_outlined,
+                                        color: Colors.white,
+                                      ),
+                                    );
+                                  } else {
+                                    return InkWell(
+                                      onTap: () {
+                                        textToSpeechBloc.add(
+                                          StartSpeaking(
+                                            text: msg,
+                                            messageIndex: messageIndex,
+                                          ),
+                                        );
+                                      },
+                                      child: const Icon(
+                                        Icons.volume_down_outlined,
+                                        color: Colors.white,
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                              const SizedBox(
+                                width: 5,
+                              ),
+                              InkWell(
+                                onTap: () {
+                                  Clipboard.setData(ClipboardData(text: msg));
+                                },
+                                child: const Icon(
+                                  Icons.copy,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(
-                            width: 5,
-                          ),
-                          InkWell(
-                            onTap: () {
-                              Clipboard.setData(ClipboardData(text: msg));
-                            },
-                            child: const Icon(
-                              Icons.copy,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-              ],
+                  ],
+                ),
+              ),
             ),
-          ),
+            if (chatIndex == 0) const SizedBox(width: 4),
+            if (chatIndex == 0)
+              Image.asset(
+                AssetsManager.userImage,
+                height: 30,
+                width: 30,
+              ),
+          ],
         ),
         const SizedBox(height: 10),
       ],
     );
+
+    // return Column(
+    //   children: [
+    //     IntrinsicWidth(
+    //       stepWidth: 0,
+    //       child: Container(
+    //         constraints: BoxConstraints(
+    //           maxWidth: MediaQuery.of(context).size.width * .9,
+    //         ),
+    //         padding: const EdgeInsets.symmetric(
+    //           horizontal: 10.0,
+    //           vertical: 8,
+    //         ),
+    //         decoration: BoxDecoration(
+    //           color: chatIndex == 0
+    //               ? cardColor.withOpacity(.2)
+    //               : Theme.of(context).primaryColor.withOpacity(0.8),
+    //           borderRadius: BorderRadius.only(
+    //             topRight: const Radius.circular(16),
+    //             topLeft: const Radius.circular(16),
+    //             bottomLeft: chatIndex == 0
+    //                 ? const Radius.circular(16)
+    //                 : const Radius.circular(0),
+    //             bottomRight: chatIndex == 1
+    //                 ? const Radius.circular(16)
+    //                 : const Radius.circular(0),
+    //           ),
+    //         ),
+    //         child: Row(
+    //           crossAxisAlignment: CrossAxisAlignment.start,
+    //           children: [
+    //             if (chatIndex == 1)
+    //               Image.asset(
+    //                 // chatIndex == 0
+    //                 // ? AssetsManager.userImage
+    //                 AssetsManager.botImage,
+    //                 height: 30,
+    //                 width: 30,
+    //               ),
+    //             if (chatIndex == 1) const SizedBox(width: 8),
+    //             Flexible(
+    //               fit: FlexFit.tight,
+    //               child: chatIndex == 0
+    //                   ? TextWidget(
+    //                       label: msg,
+    //                       color: Colors.black87,
+    //                     )
+    //                   : (shouldAnimate)
+    //                       ? DefaultTextStyle(
+    //                           style: const TextStyle(
+    //                             color: Colors.white,
+    //                             fontWeight: FontWeight.w700,
+    //                             fontSize: 18,
+    //                           ),
+    //                           child: AnimatedTextKit(
+    //                             isRepeatingAnimation: false,
+    //                             repeatForever: false,
+    //                             displayFullTextOnTap: true,
+    //                             totalRepeatCount: 1,
+    //                             animatedTexts: [
+    //                               TyperAnimatedText(msg.trim()),
+    //                             ],
+    //                           ),
+    //                         )
+    //                       : SelectableText(
+    //                           msg.trim(),
+    //                           style: const TextStyle(
+    //                             color: Colors.white,
+    //                             fontWeight: FontWeight.w700,
+    //                             fontSize: 18,
+    //                           ),
+    //                         ),
+    //             ),
+    //             if (chatIndex == 0) const SizedBox(width: 8),
+    //             if (chatIndex == 0)
+    //               Image.asset(
+    //                 AssetsManager.userImage,
+    //                 height: 30,
+    //                 width: 30,
+    //               ),
+    //             chatIndex == 0
+    //                 ? const SizedBox.shrink()
+    //                 : Row(
+    //                     mainAxisAlignment: MainAxisAlignment.end,
+    //                     mainAxisSize: MainAxisSize.min,
+    //                     children: [
+    //                       BlocBuilder<TextToSpeechBloc, TextToSpeechState>(
+    //                         builder: (context, state) {
+    //                           if (state is TextToSpeechSpeaking &&
+    //                               messageIndex ==
+    //                                   textToSpeechBloc.currentMessageIndex) {
+    //                             return InkWell(
+    //                               onTap: () {
+    //                                 textToSpeechBloc.add(StopSpeaking());
+    //                               },
+    //                               child: const Icon(
+    //                                 Icons.volume_up,
+    //                                 color: Colors.white,
+    //                               ),
+    //                             );
+    //                           } else if (state is TextToSpeechSpeaking) {
+    //                             return InkWell(
+    //                               onTap: () {
+    //                                 textToSpeechBloc.add(StopSpeaking());
+    //                                 textToSpeechBloc.add(StartSpeaking(
+    //                                   text: msg,
+    //                                   messageIndex: messageIndex,
+    //                                 ));
+    //                               },
+    //                               child: const Icon(
+    //                                 Icons.volume_down_outlined,
+    //                                 color: Colors.white,
+    //                               ),
+    //                             );
+    //                           } else {
+    //                             return InkWell(
+    //                               onTap: () {
+    //                                 textToSpeechBloc.add(
+    //                                   StartSpeaking(
+    //                                     text: msg,
+    //                                     messageIndex: messageIndex,
+    //                                   ),
+    //                                 );
+    //                               },
+    //                               child: const Icon(
+    //                                 Icons.volume_down_outlined,
+    //                                 color: Colors.white,
+    //                               ),
+    //                             );
+    //                           }
+    //                         },
+    //                       ),
+    //                       const SizedBox(
+    //                         width: 5,
+    //                       ),
+    //                       InkWell(
+    //                         onTap: () {
+    //                           Clipboard.setData(ClipboardData(text: msg));
+    //                         },
+    //                         child: const Icon(
+    //                           Icons.copy,
+    //                           color: Colors.white,
+    //                         ),
+    //                       ),
+    //                     ],
+    //                   ),
+    //           ],
+    //         ),
+    //       ),
+    //     ),
+    //     const SizedBox(height: 10),
+    //   ],
+    // );
   }
 }

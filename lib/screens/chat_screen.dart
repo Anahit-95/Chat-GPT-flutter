@@ -183,38 +183,47 @@ class _ChatScreenState extends State<ChatScreen> {
           }
         },
         builder: (context, state) {
-          return SafeArea(
-            child: Column(
-              children: [
-                if (state is ChatLoading && chatBloc.bot.chatList.isEmpty) ...[
-                  const SpinKitThreeBounce(
-                    color: Colors.white,
-                    size: 18,
+          return GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTapDown: (_) {
+              if (focusNode.hasFocus) {
+                focusNode.unfocus();
+              }
+            },
+            child: SafeArea(
+              child: Column(
+                children: [
+                  if (state is ChatLoading &&
+                      chatBloc.bot.chatList.isEmpty) ...[
+                    SpinKitThreeBounce(
+                      color: Theme.of(context).primaryColor,
+                      size: 18,
+                    ),
+                  ],
+                  ChatListWidget(
+                    chatList: chatBloc.bot.chatList,
+                    listScrollController: _listScrollController,
+                    shouldAnimate: _shouldAnimate,
+                    deleteMessage: deleteMessage,
+                  ),
+                  if (state is ChatWaiting) ...[
+                    SpinKitThreeBounce(
+                      color: Theme.of(context).primaryColor,
+                      size: 18,
+                    ),
+                  ],
+                  const SizedBox(height: 15),
+                  SendMessageBar(
+                    textEditingController: textEditingController,
+                    focusNode: focusNode,
+                    micListening: micListening,
+                    sendMessage: () => sendMessageFCT(
+                      modelsBloc: modelsBloc,
+                      chatBloc: chatBloc,
+                    ),
                   ),
                 ],
-                ChatListWidget(
-                  chatList: chatBloc.bot.chatList,
-                  listScrollController: _listScrollController,
-                  shouldAnimate: _shouldAnimate,
-                  deleteMessage: deleteMessage,
-                ),
-                if (state is ChatWaiting) ...[
-                  const SpinKitThreeBounce(
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                ],
-                const SizedBox(height: 15),
-                SendMessageBar(
-                  textEditingController: textEditingController,
-                  focusNode: focusNode,
-                  micListening: micListening,
-                  sendMessage: () => sendMessageFCT(
-                    modelsBloc: modelsBloc,
-                    chatBloc: chatBloc,
-                  ),
-                ),
-              ],
+              ),
             ),
           );
         },

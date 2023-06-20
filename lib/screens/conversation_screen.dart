@@ -191,8 +191,8 @@ class _ConversationScreenState extends State<ConversationScreen> {
               children: [
                 if (state is ConversationLoading &&
                     conversationMessages.isEmpty) ...[
-                  const SpinKitThreeBounce(
-                    color: Colors.white,
+                  SpinKitThreeBounce(
+                    color: Theme.of(context).primaryColor,
                     size: 18,
                   ),
                 ],

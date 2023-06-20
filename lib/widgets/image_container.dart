@@ -421,10 +421,11 @@ class _ImageContainerState extends State<ImageContainer> {
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: btnColor),
+                border: Border.all(color: Theme.of(context).primaryColor),
               ),
               child: IconButton(
-                color: Colors.white,
+                // color: Colors.white,
+                color: Theme.of(context).primaryColor,
                 icon: const Icon(
                   Icons.file_download_outlined,
                 ),
@@ -441,10 +442,11 @@ class _ImageContainerState extends State<ImageContainer> {
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: btnColor),
+                border: Border.all(color: Theme.of(context).primaryColor),
               ),
               child: IconButton(
-                color: Colors.white,
+                // color: Colors.white,
+                color: Theme.of(context).primaryColor,
                 onPressed: () async {
                   await _editImage();
                 },
@@ -459,10 +461,11 @@ class _ImageContainerState extends State<ImageContainer> {
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: btnColor),
+                border: Border.all(color: Theme.of(context).primaryColor),
               ),
               child: IconButton(
-                color: Colors.white,
+                // color: Colors.white,
+                color: Theme.of(context).primaryColor,
                 icon: const Icon(
                   Icons.share,
                 ),
@@ -583,34 +586,38 @@ class _ImageContainerState extends State<ImageContainer> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    ElevatedButton.icon(
-                      onPressed: () async {
-                        await _editImage();
-                      },
-                      icon: const Icon(Icons.edit),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.all(8),
-                        backgroundColor: btnColor,
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          await _editImage();
+                        },
+                        icon: const Icon(Icons.edit),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.all(8),
+                          backgroundColor: btnColor,
+                        ),
+                        label: const Text('Edit'),
                       ),
-                      label: const Text('Edit'),
                     ),
                     const SizedBox(width: 12),
-                    ElevatedButton.icon(
-                      icon: const Icon(
-                        Icons.share,
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(
+                          Icons.share,
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.all(8),
+                          backgroundColor: btnColor,
+                        ),
+                        onPressed: () async {
+                          shareImage();
+                          Services.confirmSnackBar(
+                            context: context,
+                            message: 'Image shared.',
+                          );
+                        },
+                        label: const Text('Share'),
                       ),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.all(8),
-                        backgroundColor: btnColor,
-                      ),
-                      onPressed: () async {
-                        shareImage();
-                        Services.confirmSnackBar(
-                          context: context,
-                          message: 'Image shared.',
-                        );
-                      },
-                      label: const Text('Share'),
                     ),
                   ],
                 )
@@ -622,7 +629,7 @@ class _ImageContainerState extends State<ImageContainer> {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                color: cardColor,
+                color: cardColor.withOpacity(.2),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -635,6 +642,7 @@ class _ImageContainerState extends State<ImageContainer> {
                   TextWidget(
                     label: "Waiting for image to be generated...",
                     fontSize: 16,
+                    color: Colors.black,
                   ),
                 ],
               ),
@@ -643,15 +651,16 @@ class _ImageContainerState extends State<ImageContainer> {
           return Container(
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: cardColor,
-            ),
+                borderRadius: BorderRadius.circular(12),
+                color: cardColor.withOpacity(.2),
+                border: Border.all(color: Colors.black.withOpacity(.2))),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
+              children: [
                 TextWidget(
                   label: "Your image will be displayed here.",
                   fontSize: 16.0,
+                  color: Colors.grey,
                 ),
               ],
             ),

@@ -18,25 +18,56 @@ class SendMessageBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: cardColor,
+    return Container(
+      // color: cardColor,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            offset: const Offset(0, -1),
+            color: Colors.indigo.withOpacity(.2),
+            spreadRadius: 1,
+            blurRadius: 10,
+          ),
+        ],
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: Row(
           children: [
             Expanded(
               child: TextField(
                 focusNode: focusNode,
-                style: const TextStyle(
-                  color: Colors.white,
-                ),
                 controller: textEditingController,
                 onSubmitted: (value) async {
                   await sendMessage();
                 },
-                decoration: const InputDecoration.collapsed(
+                decoration: InputDecoration(
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      width: 1,
+                      color: Colors.black.withOpacity(.2),
+                    ),
+                    borderRadius: const BorderRadius.all(
+                      Radius.circular(30),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      width: 2,
+                      color: btnColor.withOpacity(.8),
+                    ),
+                    borderRadius: const BorderRadius.all(
+                      Radius.circular(30),
+                    ),
+                  ),
                   hintText: 'How can I help you?',
-                  hintStyle: TextStyle(
+                  hintStyle: const TextStyle(
                     color: Colors.grey,
                   ),
                 ),
@@ -44,23 +75,25 @@ class SendMessageBar extends StatelessWidget {
             ),
             Row(
               children: [
-                IconButton(
-                  onPressed: () async {
+                const SizedBox(width: 4),
+                InkWell(
+                  onTap: () async {
                     await micListening();
                   },
-                  icon: const Icon(
-                    Icons.mic,
+                  child: Icon(
+                    Icons.mic_none_outlined,
                     size: 25,
-                    color: Colors.white,
+                    color: Theme.of(context).primaryColor.withOpacity(.6),
                   ),
                 ),
-                IconButton(
-                  onPressed: () async {
+                const SizedBox(width: 10),
+                InkWell(
+                  onTap: () async {
                     await sendMessage();
                   },
-                  icon: const Icon(
+                  child: Icon(
                     Icons.send,
-                    color: Colors.white,
+                    color: Theme.of(context).primaryColor.withOpacity(.8),
                   ),
                 ),
               ],
