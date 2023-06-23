@@ -8,8 +8,8 @@ class ImageGeneratorScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-    final isLandscape = mediaQuery.orientation == Orientation.landscape;
+    // final mediaQuery = MediaQuery.of(context);
+    // final isLandscape = mediaQuery.orientation == Orientation.landscape;
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -21,21 +21,23 @@ class ImageGeneratorScreen extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(12.0),
-        child: isLandscape
-            ? Row(
-                children: const [
-                  ImageGenerateWidget(),
-                  SizedBox(width: 15),
-                  ImageContainer(),
-                ],
-              )
-            : Column(
-                children: const [
-                  ImageGenerateWidget(),
-                  ImageContainer(),
-                  SizedBox(height: 40),
-                ],
-              ),
+        child:
+            // isLandscape
+            //     ? Row(
+            //         children: const [
+            //           ImageGenerateWidget(),
+            //           SizedBox(width: 15),
+            //           ImageContainer(),
+            //         ],
+            //       )
+            //     :
+            Column(
+          children: const [
+            ImageGenerateWidget(),
+            ImageContainer(),
+            SizedBox(height: 40),
+          ],
+        ),
       ),
     );
   }

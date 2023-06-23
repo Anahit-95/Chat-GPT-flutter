@@ -132,18 +132,18 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> micListening() async {
     if (!_isListening) {
-      var available = await speechToText.initialize();
+      bool available = await speechToText.initialize();
       if (available) {
         setState(() {
           _isListening = true;
-          speechToText.listen(
-            onResult: (result) {
-              setState(() {
-                textEditingController.text = result.recognizedWords;
-              });
-            },
-          );
         });
+        speechToText.listen(
+          onResult: (result) {
+            setState(() {
+              textEditingController.text = result.recognizedWords;
+            });
+          },
+        );
       }
     }
   }

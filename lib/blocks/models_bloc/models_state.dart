@@ -16,7 +16,7 @@ class ModelsLoaded extends ModelsState {
   const ModelsLoaded(this.modelsList, this.currentModel);
 
   @override
-  List<Object> get props => [modelsList];
+  List<Object> get props => [modelsList, currentModel];
 }
 
 class ModelsError extends ModelsState {

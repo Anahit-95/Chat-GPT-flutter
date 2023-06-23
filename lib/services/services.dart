@@ -14,21 +14,23 @@ class Services {
           top: Radius.circular(20),
         ),
       ),
-      backgroundColor: scaffoldBackgroundColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       context: context,
       builder: (context) {
         return Padding(
           padding: const EdgeInsets.all(18.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
+            children: [
               Flexible(
                 child: TextWidget(
                   label: 'Chosen Model:',
                   fontSize: 16,
+                  color: Theme.of(context).primaryColor,
                 ),
               ),
-              Flexible(
+              const SizedBox(width: 10),
+              const Flexible(
                 flex: 2,
                 child: ModelsDropDownWidget(),
               )

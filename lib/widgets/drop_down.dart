@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -15,14 +16,11 @@ class ModelsDropDownWidget extends StatefulWidget {
 }
 
 class _ModelsDropDownWidgetState extends State<ModelsDropDownWidget> {
-  String? currentModel;
-
   bool isFirstLoading = true;
 
   @override
   void initState() {
     context.read<ModelsBloc>().add(FetchModels());
-    currentModel = context.read<ModelsBloc>().currentModel;
     super.initState();
   }
 
@@ -33,18 +31,17 @@ class _ModelsDropDownWidgetState extends State<ModelsDropDownWidget> {
       builder: (context, state) {
         if (state is ModelsLoading) {
           isFirstLoading = false;
-          return const FittedBox(
+          return FittedBox(
             child: SpinKitFadingCircle(
-              color: Colors.lightBlue,
+              color: Theme.of(context).primaryColor,
               size: 30,
             ),
           );
         }
         if (state is ModelsError) {
-          return Center(
-            child: TextWidget(
-              label: state.message,
-            ),
+          return TextWidget(
+            label: state.message,
+            color: CupertinoColors.systemRed,
           );
         }
         if (state is ModelsLoaded) {
@@ -54,8 +51,9 @@ class _ModelsDropDownWidgetState extends State<ModelsDropDownWidget> {
           }
           return FittedBox(
             child: DropdownButton(
-              dropdownColor: scaffoldBackgroundColor,
-              iconEnabledColor: Colors.white,
+              borderRadius: const BorderRadius.all(Radius.circular(18)),
+              dropdownColor: Theme.of(context).scaffoldBackgroundColor,
+              iconEnabledColor: Theme.of(context).primaryColor,
               items: List<DropdownMenuItem<String>>.generate(
                 modelsList.length,
                 (index) => DropdownMenuItem(
@@ -63,14 +61,12 @@ class _ModelsDropDownWidgetState extends State<ModelsDropDownWidget> {
                   child: TextWidget(
                     label: modelsList[index].id,
                     fontSize: 15,
+                    color: Colors.black87,
                   ),
                 ),
               ),
-              value: currentModel,
+              value: modelsBloc.currentModel,
               onChanged: (value) async {
-                setState(() {
-                  currentModel = value.toString();
-                });
                 modelsBloc.add(SetCurrentModel(value.toString()));
                 await Future.delayed(
                   const Duration(seconds: 1),

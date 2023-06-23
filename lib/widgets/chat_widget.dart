@@ -6,7 +6,7 @@ import 'package:animated_text_kit/animated_text_kit.dart';
 import '../blocks/text_to_speech_bloc/text_to_speech_bloc.dart';
 import '../services/assets_manager.dart';
 import '../constants/constants.dart';
-import './text_widget.dart';
+import 'selectable_text_widget.dart';
 
 class ChatWidget extends StatelessWidget {
   const ChatWidget({
@@ -78,7 +78,7 @@ class ChatWidget extends StatelessWidget {
                   children: [
                     Flexible(
                       child: chatIndex == 0
-                          ? TextWidget(
+                          ? SelectableTextWidget(
                               label: msg,
                               color: Colors.black87,
                             )
@@ -99,13 +99,9 @@ class ChatWidget extends StatelessWidget {
                                     ],
                                   ),
                                 )
-                              : SelectableText(
-                                  msg.trim(),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 18,
-                                  ),
+                              : SelectableTextWidget(
+                                  label: msg.trim(),
+                                  fontWeight: FontWeight.w700,
                                 ),
                     ),
                     chatIndex == 0

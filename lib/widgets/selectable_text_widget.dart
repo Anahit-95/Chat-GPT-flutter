@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class TextWidget extends StatelessWidget {
-  const TextWidget({
+class SelectableTextWidget extends StatelessWidget {
+  const SelectableTextWidget({
     Key? key,
     required this.label,
     this.fontSize = 18,
@@ -15,7 +15,7 @@ class TextWidget extends StatelessWidget {
   final FontWeight? fontWeight;
   @override
   Widget build(BuildContext context) {
-    return Text(
+    return SelectableText(
       label,
       style: TextStyle(
         color: color ?? Colors.white,
