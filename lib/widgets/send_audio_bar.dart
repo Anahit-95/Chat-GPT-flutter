@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../constants/constants.dart';
-
 class SendAudioBar extends StatelessWidget {
   final Future<void> Function() sendMessage;
   const SendAudioBar({
@@ -14,7 +12,7 @@ class SendAudioBar extends StatelessWidget {
     return Container(
       // color: cardColor,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).scaffoldBackgroundColor,
         boxShadow: [
           BoxShadow(
             offset: const Offset(0, -1),

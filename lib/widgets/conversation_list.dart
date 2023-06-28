@@ -1,3 +1,4 @@
+import 'package:chat_gpt_api/widgets/text_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -23,10 +24,10 @@ class ConversationList extends StatelessWidget {
       color: Theme.of(context).primaryColor,
       child: Container(
         // color: Colors.white,
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
           // color: scaffoldBackgroundColor,
-          borderRadius: BorderRadius.only(
+          borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(80),
           ),
         ),
@@ -49,10 +50,21 @@ class ConversationList extends StatelessWidget {
                 style: const TextStyle(color: Colors.red),
               );
             }
+            if (conversationsBloc.conversations.isEmpty) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 18, vertical: 25),
+                child: Center(
+                  child: TextWidget(
+                    label: 'You have no conversations yet.',
+                    color: Colors.grey,
+                  ),
+                ),
+              );
+            }
             return ListView.builder(
               padding: const EdgeInsets.symmetric(
-                horizontal: 18,
-                vertical: 25,
+                horizontal: 20,
+                vertical: 30,
               ),
               itemCount: conversationsBloc.conversations.length,
               shrinkWrap: true,

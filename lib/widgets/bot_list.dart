@@ -3,8 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 import '../blocks/bots_bloc/bots_bloc.dart';
-import '../constants/constants.dart';
-import 'bot_widget.dart';
+import './bot_widget.dart';
 
 class BotList extends StatelessWidget {
   const BotList({
@@ -27,35 +26,14 @@ class BotList extends StatelessWidget {
           );
         }
         if (state is BotsLoaded) {
-          // return Row(
-          //   children: [
-          //     Flexible(
-          //       child: GridView.builder(
-          //         itemCount: state.bots.length,
-          //         padding: const EdgeInsets.only(bottom: 20),
-          //         physics: const NeverScrollableScrollPhysics(),
-          //         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          //           crossAxisCount: 2,
-          //           crossAxisSpacing: 12,
-          //           mainAxisSpacing: 12,
-          //           childAspectRatio: 5 / 3,
-          //         ),
-          //         shrinkWrap: true,
-          //         itemBuilder: (context, index) => BotWidget(
-          //           bot: state.bots[index],
-          //         ),
-          //       ),
-          //     ),
-          //   ],
-          // );
           return Container(
             color: Theme.of(context).primaryColor,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 1),
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
                 // color: scaffoldBackgroundColor,
-                borderRadius: BorderRadius.only(
+                borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(80),
                 ),
               ),

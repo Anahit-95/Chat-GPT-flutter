@@ -9,9 +9,9 @@ import '../blocks/image_bloc/image_bloc.dart';
 import '../blocks/text_to_speech_bloc/text_to_speech_bloc.dart';
 
 import './services/db_services.dart';
-import './screens/home_screen.dart';
 import './constants/constants.dart';
-import 'screens/home_page.dart';
+import './blocks/speech_to_text_bloc/speech_to_text_bloc.dart';
+import './screens/home_page.dart';
 
 void main() {
   // SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
@@ -24,6 +24,24 @@ void main() {
   ]);
   runApp(const MyApp());
 }
+
+ThemeData lightTheme = ThemeData(
+  primaryColor: btnColor,
+  scaffoldBackgroundColor: Colors.white,
+  cardColor: Colors.white,
+  appBarTheme: const AppBarTheme(
+    color: btnColor,
+  ),
+);
+
+ThemeData darkTheme = ThemeData(
+  primaryColor: btnColor,
+  cardColor: Colors.indigo[100],
+  scaffoldBackgroundColor: bgColor,
+  appBarTheme: const AppBarTheme(
+    color: btnColor,
+  ),
+);
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -42,19 +60,13 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (_) => ModelsBloc()),
         BlocProvider(create: (_) => ImageBloc()),
         BlocProvider(create: (_) => TextToSpeechBloc()),
+        BlocProvider(create: (_) => SpeechToTextBloc()),
       ],
       child: MaterialApp(
         title: 'GPT Assistant',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          primaryColor: btnColor,
-          // scaffoldBackgroundColor: scaffoldBackgroundColor,
-          scaffoldBackgroundColor: Colors.white,
-          appBarTheme: const AppBarTheme(
-            color: btnColor,
-          ),
-        ),
-        home: const HomePageDraft(),
+        theme: lightTheme,
+        home: const HomePage(),
       ),
     );
   }

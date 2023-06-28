@@ -33,12 +33,12 @@ class ConversationItem extends StatelessWidget {
       children: [
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
                 offset: const Offset(0, 5),
-                color: Colors.indigo.withOpacity(.2),
+                color: Colors.indigo.withOpacity(.3),
                 spreadRadius: 2,
                 blurRadius: 5,
               ),
@@ -81,7 +81,7 @@ class ConversationItem extends StatelessWidget {
               },
               child: Icon(
                 Icons.highlight_remove,
-                color: Theme.of(context).primaryColor.withOpacity(0.4),
+                color: Theme.of(context).primaryColor.withOpacity(0.5),
               ),
             ),
             leading: CircleAvatar(

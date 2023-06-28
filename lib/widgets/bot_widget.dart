@@ -2,11 +2,9 @@ import 'package:chat_gpt_api/screens/chat_screen.dart';
 import 'package:chat_gpt_api/screens/image_generator_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-// import 'package:provider/provider.dart';
 
 import '../blocks/chat_bloc/chat_bloc.dart';
 import '../models/bot_model.dart';
-// import '../providers/chats_provider.dart';
 import '../screens/audio_screen.dart';
 
 class BotWidget extends StatelessWidget {
@@ -61,48 +59,15 @@ class BotWidget extends StatelessWidget {
             Navigator.of(context).pushReplacementNamed('/');
         }
       },
-      // child: Material(
-      //   elevation: 4,
-      //   borderRadius: BorderRadius.circular(16),
-      //   child: Container(
-      //     padding: const EdgeInsets.all(16),
-      //     decoration: BoxDecoration(
-      //       color: bot.color,
-      //       borderRadius: BorderRadius.circular(16),
-      //     ),
-      //     child: Row(
-      //       mainAxisAlignment: MainAxisAlignment.center,
-      //       crossAxisAlignment: CrossAxisAlignment.center,
-      //       children: [
-      //         Icon(
-      //           bot.iconData,
-      //           size: 25,
-      //           color: Colors.white,
-      //         ),
-      //         const SizedBox(width: 8),
-      //         Expanded(
-      //           child: Text(
-      //             bot.title,
-      //             softWrap: true,
-      //             style: const TextStyle(
-      //               color: Colors.white,
-      //               fontSize: 16,
-      //             ),
-      //           ),
-      //         ),
-      //       ],
-      //     ),
-      //   ),
-      // ),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           // color: bot.color,
           borderRadius: BorderRadius.circular(10),
           boxShadow: [
             BoxShadow(
               offset: const Offset(0, 5),
-              color: Theme.of(context).primaryColor.withOpacity(.2),
+              color: Colors.indigo.withOpacity(.2),
               // color: bot.color.withOpacity(.2),
               spreadRadius: 2,
               blurRadius: 5,

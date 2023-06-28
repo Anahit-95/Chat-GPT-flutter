@@ -69,24 +69,18 @@ class TextToSpeech {
     tts.setStartHandler(() {
       print('TTS IS STARTED');
       _isSpeaking = true;
-      if (_onStateChanged != null) {
-        _onStateChanged(_isSpeaking);
-      }
+      _onStateChanged(_isSpeaking);
     });
     tts.setCompletionHandler(() {
       print('Completed');
       _isSpeaking = false;
       _isSpeakInProgress = false;
-      if (_onStateChanged != null) {
-        _onStateChanged(_isSpeaking);
-      }
+      _onStateChanged(_isSpeaking);
     });
     tts.setErrorHandler((message) {
       _isSpeaking = false;
       _isSpeakInProgress = false;
-      if (_onStateChanged != null) {
-        _onStateChanged(_isSpeaking);
-      }
+      _onStateChanged(_isSpeaking);
       print(message);
     });
     await tts.speak(text);
@@ -94,9 +88,7 @@ class TextToSpeech {
 
   Future<void> stopSpeaking() async {
     _isSpeaking = false;
-    if (_onStateChanged != null) {
-      _onStateChanged(_isSpeaking);
-    }
+    _onStateChanged(_isSpeaking);
     await tts.stop();
   }
 }

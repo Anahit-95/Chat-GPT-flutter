@@ -3,9 +3,9 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:speech_to_text/speech_to_text.dart';
 
 import '../blocks/chat_bloc/chat_bloc.dart';
+import '../blocks/speech_to_text_bloc/speech_to_text_bloc.dart';
 import '../blocks/text_to_speech_bloc/text_to_speech_bloc.dart';
 import '../blocks/models_bloc/models_bloc.dart';
 import '../services/services.dart';
@@ -22,15 +22,14 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  bool _isListening = false;
   bool _shouldAnimate = false;
 
   late TextEditingController textEditingController;
   late ScrollController _listScrollController;
   late FocusNode focusNode;
-  late SpeechToText speechToText;
   late ChatBloc chatBloc;
   late TextToSpeechBloc textToSpeechBloc;
+  late SpeechToTextBloc speechToTextBloc;
 
   @override
   void initState() {
@@ -38,12 +37,12 @@ class _ChatScreenState extends State<ChatScreen> {
     _listScrollController = ScrollController();
     textEditingController = TextEditingController();
     focusNode = FocusNode();
-    speechToText = SpeechToText();
     chatBloc = BlocProvider.of<ChatBloc>(context);
     chatBloc.add(FetchChat());
     textToSpeechBloc = BlocProvider.of<TextToSpeechBloc>(context);
     textToSpeechBloc.initializeTts();
     textToSpeechBloc.add(TtsInitialized());
+    speechToTextBloc = BlocProvider.of<SpeechToTextBloc>(context);
     if (_listScrollController.hasClients) {
       scrollListToEnd();
     }
@@ -54,8 +53,8 @@ class _ChatScreenState extends State<ChatScreen> {
     _listScrollController.dispose();
     textEditingController.dispose();
     focusNode.dispose();
-    speechToText.cancel();
     textToSpeechBloc.add(DisposeTts());
+    speechToTextBloc.add(StopListening());
     super.dispose();
   }
 
@@ -130,24 +129,6 @@ class _ChatScreenState extends State<ChatScreen> {
     Navigator.of(context).pop(true);
   }
 
-  Future<void> micListening() async {
-    if (!_isListening) {
-      bool available = await speechToText.initialize();
-      if (available) {
-        setState(() {
-          _isListening = true;
-        });
-        speechToText.listen(
-          onResult: (result) {
-            setState(() {
-              textEditingController.text = result.recognizedWords;
-            });
-          },
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final modelsBloc = BlocProvider.of<ModelsBloc>(context);
@@ -216,7 +197,6 @@ class _ChatScreenState extends State<ChatScreen> {
                   SendMessageBar(
                     textEditingController: textEditingController,
                     focusNode: focusNode,
-                    micListening: micListening,
                     sendMessage: () => sendMessageFCT(
                       modelsBloc: modelsBloc,
                       chatBloc: chatBloc,
@@ -229,17 +209,26 @@ class _ChatScreenState extends State<ChatScreen> {
         },
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: _isListening
-          ? MicButton(
-              isListening: _isListening,
-              micStopped: () async {
-                setState(() {
-                  _isListening = false;
-                });
-                await speechToText.stop();
-              },
-            )
-          : null,
+      floatingActionButton: BlocConsumer<SpeechToTextBloc, SpeechToTextState>(
+        listener: (context, state) {
+          print(state.runtimeType);
+          if (state is ListeningStarted) {
+            textEditingController.text = state.recognizedWords;
+          }
+          if (state is SpeechToTextError) {
+            Services.errorSnackBar(
+              context: context,
+              errorMessage: state.error,
+            );
+          }
+        },
+        builder: (context, state) {
+          if (state is ListeningStarted) {
+            return const MicButton();
+          }
+          return const SizedBox.shrink();
+        },
+      ),
     );
   }
 }

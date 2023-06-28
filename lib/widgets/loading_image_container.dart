@@ -17,9 +17,9 @@ class LoadingImageContainer extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         color: cardColor.withOpacity(.2),
       ),
-      child: Column(
+      child: const Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
+        children: [
           SpinKitSpinningLines(
             color: btnColor,
             size: 50,
@@ -28,7 +28,7 @@ class LoadingImageContainer extends StatelessWidget {
           TextWidget(
             label: "Waiting for image to be generated...",
             fontSize: 16,
-            color: Colors.black,
+            color: Colors.grey,
           ),
         ],
       ),

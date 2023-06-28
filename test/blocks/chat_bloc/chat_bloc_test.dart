@@ -12,10 +12,10 @@ class MockApiService extends Mock implements ApiService {}
 void main() {
   late ChatBloc chatBloc;
   late Bot bot;
-  late MockApiService mockApiService;
+  // late MockApiService mockApiService;
 
   setUp(() {
-    mockApiService = MockApiService();
+    // mockApiService = MockApiService();
     bot = Bot(
       title: 'Simple Bot',
       iconData: Icons.android,

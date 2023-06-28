@@ -6,7 +6,7 @@ import 'package:animated_text_kit/animated_text_kit.dart';
 import '../blocks/text_to_speech_bloc/text_to_speech_bloc.dart';
 import '../services/assets_manager.dart';
 import '../constants/constants.dart';
-import 'selectable_text_widget.dart';
+import './selectable_text_widget.dart';
 
 class ChatWidget extends StatelessWidget {
   const ChatWidget({
@@ -61,7 +61,7 @@ class ChatWidget extends StatelessWidget {
                           end: Alignment.bottomRight,
                         )
                       : null,
-                  color: chatIndex == 0 ? cardColor.withOpacity(.2) : null,
+                  color: chatIndex == 0 ? Colors.grey[300] : null,
                   borderRadius: BorderRadius.only(
                     topRight: const Radius.circular(20),
                     topLeft: const Radius.circular(20),

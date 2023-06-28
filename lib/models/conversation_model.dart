@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 
 import 'chat_model.dart';
 
+// ignore: must_be_immutable
 class ConversationModel extends Equatable {
   final int id;
   final String title;

@@ -1,27 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../blocks/speech_to_text_bloc/speech_to_text_bloc.dart';
 import '../constants/constants.dart';
 
 class SendMessageBar extends StatelessWidget {
   final TextEditingController textEditingController;
   final FocusNode focusNode;
-  final Future<void> Function() micListening;
   final Future<void> Function() sendMessage;
 
   const SendMessageBar({
     Key? key,
     required this.textEditingController,
     required this.focusNode,
-    required this.micListening,
     required this.sendMessage,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final speechToTextBloc = BlocProvider.of<SpeechToTextBloc>(context);
     return Container(
-      // color: cardColor,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).scaffoldBackgroundColor,
         boxShadow: [
           BoxShadow(
             offset: const Offset(0, -1),
@@ -43,6 +43,8 @@ class SendMessageBar extends StatelessWidget {
                   await sendMessage();
                 },
                 decoration: InputDecoration(
+                  fillColor: Colors.white.withOpacity(.02),
+                  filled: true,
                   isDense: true,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 14,
@@ -51,7 +53,7 @@ class SendMessageBar extends StatelessWidget {
                   enabledBorder: OutlineInputBorder(
                     borderSide: BorderSide(
                       width: 1,
-                      color: Colors.black.withOpacity(.2),
+                      color: Colors.grey.withOpacity(.5),
                     ),
                     borderRadius: const BorderRadius.all(
                       Radius.circular(30),
@@ -77,9 +79,7 @@ class SendMessageBar extends StatelessWidget {
               children: [
                 const SizedBox(width: 4),
                 InkWell(
-                  onTap: () async {
-                    await micListening();
-                  },
+                  onTap: () => speechToTextBloc.add(StartListening()),
                   child: Icon(
                     Icons.mic_none_outlined,
                     size: 25,

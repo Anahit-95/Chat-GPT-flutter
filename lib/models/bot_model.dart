@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import './chat_model.dart';
 
+// ignore: must_be_immutable
 class Bot extends Equatable {
   final String title;
   final IconData iconData;

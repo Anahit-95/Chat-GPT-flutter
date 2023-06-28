@@ -33,8 +33,8 @@ class ReturnNetworkImage extends ImageEvent {}
 class ShareImage extends ImageEvent {}
 
 class DownloadImage extends ImageEvent {
-  BuildContext context;
-  DownloadImage({
+  final BuildContext context;
+  const DownloadImage({
     required this.context,
   });
   @override
