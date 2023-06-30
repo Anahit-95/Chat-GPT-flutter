@@ -53,6 +53,19 @@ class SendMessageAndGetAnswers extends ConversationEvent {
   List<Object> get props => [msg, chosenModelId];
 }
 
+class SendMessageGPT extends ConversationEvent {
+  final String msg;
+  final String chosenModelId;
+
+  const SendMessageGPT({
+    required this.msg,
+    required this.chosenModelId,
+  });
+
+  @override
+  List<Object> get props => [msg, chosenModelId];
+}
+
 class DeleteMessage extends ConversationEvent {
   final ChatModel msg;
   const DeleteMessage({
@@ -66,3 +79,9 @@ class DeleteMessage extends ConversationEvent {
 class ClearMessages extends ConversationEvent {}
 
 class UpdateMessageList extends ConversationEvent {}
+
+class StartAnimating extends ConversationEvent {}
+
+class StopAnimating extends ConversationEvent {}
+
+class SendAudioFile extends ConversationEvent {}

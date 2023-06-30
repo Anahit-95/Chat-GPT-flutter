@@ -1,5 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:chat_gpt_api/blocks/chat_bloc/chat_bloc.dart';
+import 'package:chat_gpt_api/blocks/text_to_speech_bloc/text_to_speech_bloc.dart';
 import 'package:chat_gpt_api/models/bot_model.dart';
 import 'package:chat_gpt_api/models/chat_model.dart';
 import 'package:chat_gpt_api/services/api_services.dart';
@@ -8,6 +9,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockApiService extends Mock implements ApiService {}
+
+class MockTextToSpeechBloc extends Mock implements TextToSpeechBloc {}
 
 void main() {
   late ChatBloc chatBloc;
@@ -27,7 +30,7 @@ void main() {
         const ChatModel(msg: 'Hello', chatIndex: 1),
       ],
     );
-    chatBloc = ChatBloc(bot: bot);
+    chatBloc = ChatBloc(bot: bot, textToSpeechBloc: MockTextToSpeechBloc());
   });
 
   group('ChatBloc testing', () {
@@ -79,8 +82,8 @@ void main() {
       },
       expect: () => [
         ChatLoading(),
-        ChatWaiting(),
         ChatLoaded(bot: bot.copyWith(chatList: [])),
+        ChatWaiting(),
       ],
     );
 

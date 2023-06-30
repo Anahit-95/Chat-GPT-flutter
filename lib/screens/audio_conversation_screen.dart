@@ -1,6 +1,3 @@
-import 'dart:developer';
-
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -21,8 +18,6 @@ class AudioConversationScreen extends StatefulWidget {
 }
 
 class _AudioConversationScreenState extends State<AudioConversationScreen> {
-  bool _shouldAnimate = false;
-
   late TextToSpeechBloc textToSpeechBloc;
   late ScrollController _listScrollController;
   late ConversationBloc conversationBloc;
@@ -54,36 +49,6 @@ class _AudioConversationScreenState extends State<AudioConversationScreen> {
       duration: const Duration(seconds: 2),
       curve: Curves.easeOut,
     );
-  }
-
-  Future<void> sendAudioFile(
-      {required ConversationBloc conversationBloc}) async {
-    if (conversationBloc.state is ConversationWaiting) {
-      Services.errorSnackBar(
-        context: context,
-        errorMessage: 'You cant send multiple messages at a time.',
-      );
-      return;
-    }
-    try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles();
-
-      if (result != null) {
-        conversationBloc.add(AddUserMessage(msg: result.files.single.name));
-        conversationBloc
-            .add(AddBotMessage(filePath: result.files.single.path!));
-      }
-    } catch (error) {
-      log("error $error");
-      Services.errorSnackBar(
-        context: context,
-        errorMessage: error.toString(),
-      );
-    } finally {
-      if (mounted) {
-        scrollListToEnd();
-      }
-    }
   }
 
   void deleteMessage(int index) {
@@ -120,9 +85,6 @@ class _AudioConversationScreenState extends State<AudioConversationScreen> {
               errorMessage: state.message,
             );
           }
-          if (state is ConversationAnimating) {
-            _shouldAnimate = true;
-          }
           if (state is ConversationLoaded) {
             WidgetsBinding.instance.addPostFrameCallback(
               (_) => scrollListToEnd(),
@@ -138,15 +100,16 @@ class _AudioConversationScreenState extends State<AudioConversationScreen> {
             children: [
               if (state is ConversationLoading &&
                   conversationMessages.isEmpty) ...[
-                const SpinKitThreeBounce(
-                  color: Colors.white,
+                SpinKitThreeBounce(
+                  color: Theme.of(context).primaryColor,
                   size: 18,
                 ),
               ],
               ChatListWidget(
                 chatList: conversationMessages,
                 listScrollController: _listScrollController,
-                shouldAnimate: _shouldAnimate,
+                shouldAnimate: conversationBloc.shouldAnimate,
+                stopAnimation: () => conversationBloc.add(StopAnimating()),
                 deleteMessage: deleteMessage,
               ),
               if (state is ConversationWaiting) ...[
@@ -158,7 +121,8 @@ class _AudioConversationScreenState extends State<AudioConversationScreen> {
               const SizedBox(height: 15),
               SendAudioBar(
                 sendMessage: () async {
-                  await sendAudioFile(conversationBloc: conversationBloc);
+                  conversationBloc.add(SendAudioFile());
+                  scrollListToEnd();
                 },
               ),
             ],

@@ -25,22 +25,40 @@ void main() {
   runApp(const MyApp());
 }
 
-ThemeData lightTheme = ThemeData(
+ThemeData lightTheme = ThemeData.light().copyWith(
   primaryColor: btnColor,
   scaffoldBackgroundColor: Colors.white,
   cardColor: Colors.white,
   appBarTheme: const AppBarTheme(
     color: btnColor,
   ),
+  // inputDecorationTheme: InputDecorationTheme(
+  //   fillColor: Colors.black.withOpacity(.02),
+  //   filled: true,
+  //   isDense: true,
+  //   contentPadding: const EdgeInsets.symmetric(
+  //     horizontal: 14,
+  //     vertical: 12,
+  //   ),
+  // ),
 );
 
-ThemeData darkTheme = ThemeData(
+ThemeData darkTheme = ThemeData.dark().copyWith(
   primaryColor: btnColor,
   cardColor: Colors.indigo[100],
   scaffoldBackgroundColor: bgColor,
   appBarTheme: const AppBarTheme(
     color: btnColor,
   ),
+  // inputDecorationTheme: InputDecorationTheme(
+  //   fillColor: Colors.white.withOpacity(.02),
+  //   filled: true,
+  //   isDense: true,
+  //   contentPadding: const EdgeInsets.symmetric(
+  //     horizontal: 14,
+  //     vertical: 12,
+  //   ),
+  // ),
 );
 
 class MyApp extends StatelessWidget {

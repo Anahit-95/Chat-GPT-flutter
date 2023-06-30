@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -22,8 +20,6 @@ class ConversationScreen extends StatefulWidget {
 }
 
 class _ConversationScreenState extends State<ConversationScreen> {
-  bool _shouldAnimate = false;
-
   late TextEditingController textEditingController;
   late ScrollController _listScrollController;
   late FocusNode focusNode;
@@ -68,56 +64,68 @@ class _ConversationScreenState extends State<ConversationScreen> {
 
   Future<void> sendMessageFCT({
     required ModelsBloc modelsBloc,
-    required ConversationBloc conversationBloc,
   }) async {
-    if (conversationBloc.state is ConversationWaiting) {
-      Services.errorSnackBar(
-        context: context,
-        errorMessage: 'You cant send multiple messages at a time.',
-      );
-      return;
-    }
-    if (textEditingController.text.isEmpty) {
-      Services.errorSnackBar(
-        context: context,
-        errorMessage: 'Please type a message.',
-      );
-      return;
-    }
-    try {
-      String msg = textEditingController.text;
-      conversationBloc.add(AddUserMessage(msg: msg));
-      textEditingController.clear();
-      focusNode.unfocus();
-
-      final stateStream = BlocProvider.of<ConversationBloc>(context).stream;
-
-      conversationBloc.add(SendMessageAndGetAnswers(
-        msg: msg,
-        chosenModelId: modelsBloc.currentModel,
-      ));
-
-      await stateStream.firstWhere((state) {
-        return state is ConversationLoaded &&
-            state.conversation.messages.last.chatIndex == 1;
-      });
-
-      var convMessages = conversationBloc.conversation.messages;
-
-      Future.delayed(const Duration(milliseconds: 0), () {
-        textToSpeechBloc.add(StartSpeaking(
-          messageIndex: convMessages.length - 1,
-          text: convMessages[convMessages.length - 1].msg,
-        ));
-      });
-    } catch (error) {
-      log("error $error");
-    } finally {
-      if (mounted) {
-        scrollListToEnd();
-      }
-    }
+    conversationBloc.add(SendMessageGPT(
+      msg: textEditingController.text,
+      chosenModelId: modelsBloc.currentModel,
+    ));
+    textEditingController.clear();
+    focusNode.unfocus();
+    scrollListToEnd();
   }
+
+  // Future<void> sendMessageFCT({
+  //   required ModelsBloc modelsBloc,
+  //   required ConversationBloc conversationBloc,
+  // }) async {
+  //   if (conversationBloc.state is ConversationWaiting) {
+  //     Services.errorSnackBar(
+  //       context: context,
+  //       errorMessage: 'You cant send multiple messages at a time.',
+  //     );
+  //     return;
+  //   }
+  //   if (textEditingController.text.isEmpty) {
+  //     Services.errorSnackBar(
+  //       context: context,
+  //       errorMessage: 'Please type a message.',
+  //     );
+  //     return;
+  //   }
+  //   try {
+  //     String msg = textEditingController.text;
+  //     conversationBloc.add(AddUserMessage(msg: msg));
+  //     textEditingController.clear();
+  //     focusNode.unfocus();
+
+  //     final stateStream = BlocProvider.of<ConversationBloc>(context).stream;
+
+  //     conversationBloc.add(SendMessageAndGetAnswers(
+  //       msg: msg,
+  //       chosenModelId: modelsBloc.currentModel,
+  //     ));
+
+  //     await stateStream.firstWhere((state) {
+  //       return state is ConversationLoaded &&
+  //           state.conversation.messages.last.chatIndex == 1;
+  //     });
+
+  //     var convMessages = conversationBloc.conversation.messages;
+
+  //     Future.delayed(const Duration(milliseconds: 0), () {
+  //       textToSpeechBloc.add(StartSpeaking(
+  //         messageIndex: convMessages.length - 1,
+  //         text: convMessages[convMessages.length - 1].msg,
+  //       ));
+  //     });
+  //   } catch (error) {
+  //     log("error $error");
+  //   } finally {
+  //     if (mounted) {
+  //       scrollListToEnd();
+  //     }
+  //   }
+  // }
 
   void deleteMessage(int index) {
     conversationBloc.add(DeleteMessage(
@@ -134,18 +142,18 @@ class _ConversationScreenState extends State<ConversationScreen> {
       appBar: ChatAppBar(
         title: conversationBloc.conversation.title,
         showModels: true,
-        onSave: () async {
-          conversationBloc.add(UpdateMessageList());
-          await conversationBloc.stream.firstWhere((state) {
-            return (state is ConversationLoaded);
-          });
-          Future.delayed(Duration.zero, () {
-            Services.confirmSnackBar(
-              context: context,
-              message: 'Messages saved succesfully.',
-            );
-          });
-        },
+        // onSave: () async {
+        //   conversationBloc.add(UpdateMessageList());
+        //   await conversationBloc.stream.firstWhere((state) {
+        //     return (state is ConversationLoaded);
+        //   });
+        //   Future.delayed(Duration.zero, () {
+        //     Services.confirmSnackBar(
+        //       context: context,
+        //       message: 'Messages saved succesfully.',
+        //     );
+        //   });
+        // },
         onClear: () => conversationBloc.add(ClearMessages()),
       ),
       body: BlocConsumer<ConversationBloc, ConversationState>(
@@ -155,9 +163,6 @@ class _ConversationScreenState extends State<ConversationScreen> {
               context: context,
               errorMessage: state.message,
             );
-          }
-          if (state is ConversationAnimating) {
-            _shouldAnimate = true;
           }
           if (state is ConversationLoaded) {
             WidgetsBinding.instance.addPostFrameCallback(
@@ -180,7 +185,8 @@ class _ConversationScreenState extends State<ConversationScreen> {
                 ChatListWidget(
                   chatList: conversationMessages,
                   listScrollController: _listScrollController,
-                  shouldAnimate: _shouldAnimate,
+                  shouldAnimate: conversationBloc.shouldAnimate,
+                  stopAnimation: () => conversationBloc.add(StopAnimating()),
                   deleteMessage: deleteMessage,
                 ),
                 if (state is ConversationWaiting) ...[
@@ -194,7 +200,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
                   focusNode: focusNode,
                   sendMessage: () => sendMessageFCT(
                     modelsBloc: modelsBloc,
-                    conversationBloc: conversationBloc,
+                    // conversationBloc: conversationBloc,
                   ),
                 )
               ],

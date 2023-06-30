@@ -24,8 +24,10 @@ class SpeechToTextBloc extends Bloc<SpeechToTextEvent, SpeechToTextState> {
         await speechToText.initialize(
           onError: (error) => add(StopListening()),
           onStatus: (status) {
+            print(status);
             if (status != 'listening') {
-              emit(const ListeningStopped());
+              // emit(const ListeningStopped());
+              add(StopListening());
             }
           },
         );

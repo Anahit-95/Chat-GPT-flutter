@@ -1,4 +1,3 @@
-import 'package:chat_gpt_api/widgets/text_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -6,6 +5,8 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../blocks/bots_bloc/bots_bloc.dart';
 import '../blocks/conversations_bloc/conversation_list_bloc.dart';
 import '../models/bot_model.dart';
+import '../services/services.dart';
+import '../widgets/text_widget.dart';
 import './conversation_item.dart';
 
 class ConversationList extends StatelessWidget {
@@ -31,7 +32,15 @@ class ConversationList extends StatelessWidget {
             topLeft: Radius.circular(80),
           ),
         ),
-        child: BlocBuilder<ConversationListBloc, ConversationListState>(
+        child: BlocConsumer<ConversationListBloc, ConversationListState>(
+          listener: (context, state) {
+            if (state is ConversationListError) {
+              Services.errorSnackBar(
+                context: context,
+                errorMessage: state.message,
+              );
+            }
+          },
           builder: (context, state) {
             if (state is ConversationListLoading) {
               return SizedBox(
@@ -42,12 +51,6 @@ class ConversationList extends StatelessWidget {
                     size: 50,
                   ),
                 ),
-              );
-            }
-            if (state is ConversationListError) {
-              return Text(
-                state.message,
-                style: const TextStyle(color: Colors.red),
               );
             }
             if (conversationsBloc.conversations.isEmpty) {

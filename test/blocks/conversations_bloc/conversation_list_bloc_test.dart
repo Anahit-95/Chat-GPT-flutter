@@ -98,6 +98,7 @@ void main() {
       ),
       expect: () => [
         ConversationListLoading(),
+        ConversationCreated(),
         ConversationListLoaded(
           conversations: [
             ConversationModel(

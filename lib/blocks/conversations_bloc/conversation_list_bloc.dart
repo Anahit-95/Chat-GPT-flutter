@@ -38,6 +38,10 @@ class ConversationListBloc
   Future<void> _onCreateConversation(
       CreateConversation event, Emitter<ConversationListState> emit) async {
     try {
+      if (event.title.isEmpty) {
+        emit(const ConversationListError("Please enter conversation's title."));
+        return;
+      }
       emit(ConversationListLoading());
       final conversationId = await _dbHelper.createConversation(
         event.title,
@@ -47,6 +51,8 @@ class ConversationListBloc
         conversationId,
         event.chatList,
       );
+      emit(ConversationCreated());
+      print('message from bloc - ${state.runtimeType}');
       ConversationModel conversation = ConversationModel(
         id: conversationId,
         title: event.title,
@@ -55,6 +61,7 @@ class ConversationListBloc
       );
       conversations.insert(0, conversation);
       emit(ConversationListLoaded(conversations: conversations));
+      print('message from bloc - ${state.runtimeType}');
     } catch (error) {
       emit(ConversationListError('Something went wrong: $error'));
     }

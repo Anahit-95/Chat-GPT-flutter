@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../blocks/conversations_bloc/conversation_list_bloc.dart';
 import '../services/assets_manager.dart';
 import '../services/services.dart';
 
@@ -56,11 +58,37 @@ class ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
           ),
         if (onSave != null)
-          IconButton(
-            onPressed: () async {
-              await onSave!();
-            },
-            icon: const Icon(Icons.save_outlined),
+          MultiBlocListener(
+            listeners: [
+              BlocListener<ConversationListBloc, ConversationListState>(
+                listener: (context, state) {
+                  if (state is ConversationCreated) {
+                    Future.delayed(Duration.zero, () {
+                      // Navigator.of(context).pushNamed('/');
+                      Services.confirmSnackBar(
+                        context: context,
+                        message: "Conversation created succesfully.",
+                      );
+                      print('worked from Bloc listener');
+                    });
+                  }
+                  if (state is ConversationListError) {
+                    Future.delayed(Duration.zero, () {
+                      Services.errorSnackBar(
+                        context: context,
+                        errorMessage: state.message,
+                      );
+                    });
+                  }
+                },
+              ),
+            ],
+            child: IconButton(
+              onPressed: () async {
+                await onSave!();
+              },
+              icon: const Icon(Icons.save_outlined),
+            ),
           ),
         if (onClear != null)
           IconButton(

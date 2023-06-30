@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -22,8 +20,6 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  bool _shouldAnimate = false;
-
   late TextEditingController textEditingController;
   late ScrollController _listScrollController;
   late FocusNode focusNode;
@@ -66,60 +62,72 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  // Future<void> sendMessageFCT({
+  //   required ModelsBloc modelsBloc,
+  //   required ChatBloc chatBloc,
+  // }) async {
+  //   if (chatBloc.state is ChatWaiting) {
+  //     Services.errorSnackBar(
+  //       context: context,
+  //       errorMessage: 'You cant send multiple messages at a time.',
+  //     );
+  //     return;
+  //   }
+  //   if (textEditingController.text.isEmpty) {
+  //     Services.errorSnackBar(
+  //       context: context,
+  //       errorMessage: 'Please type a message.',
+  //     );
+  //     return;
+  //   }
+  //   try {
+  //     String msg = textEditingController.text;
+  //     chatBloc.add(AddUserMessage(msg: msg));
+  //     textEditingController.clear();
+  //     focusNode.unfocus();
+
+  //     final stateStream = BlocProvider.of<ChatBloc>(context).stream;
+
+  //     chatBloc.add(SendMessageAndGetAnswers(
+  //       msg: msg,
+  //       chosenModelId: modelsBloc.currentModel,
+  //     ));
+
+  //     await stateStream.firstWhere((state) {
+  //       return state is ChatLoaded && state.bot.chatList.last.chatIndex == 1;
+  //     });
+
+  //     var chatMessages = chatBloc.bot.chatList;
+
+  //     Future.delayed(const Duration(milliseconds: 0), () {
+  //       textToSpeechBloc.add(StartSpeaking(
+  //         messageIndex: chatMessages.length - 1,
+  //         text: chatMessages[chatMessages.length - 1].msg,
+  //       ));
+  //     });
+  //   } catch (error) {
+  //     log("error $error");
+  //     Services.errorSnackBar(
+  //       context: context,
+  //       errorMessage: '$error',
+  //     );
+  //   } finally {
+  //     if (mounted) {
+  //       scrollListToEnd();
+  //     }
+  //   }
+  // }
+
   Future<void> sendMessageFCT({
     required ModelsBloc modelsBloc,
-    required ChatBloc chatBloc,
   }) async {
-    if (chatBloc.state is ChatWaiting) {
-      Services.errorSnackBar(
-        context: context,
-        errorMessage: 'You cant send multiple messages at a time.',
-      );
-      return;
-    }
-    if (textEditingController.text.isEmpty) {
-      Services.errorSnackBar(
-        context: context,
-        errorMessage: 'Please type a message.',
-      );
-      return;
-    }
-    try {
-      String msg = textEditingController.text;
-      chatBloc.add(AddUserMessage(msg: msg));
-      textEditingController.clear();
-      focusNode.unfocus();
-
-      final stateStream = BlocProvider.of<ChatBloc>(context).stream;
-
-      chatBloc.add(SendMessageAndGetAnswers(
-        msg: msg,
-        chosenModelId: modelsBloc.currentModel,
-      ));
-
-      await stateStream.firstWhere((state) {
-        return state is ChatLoaded && state.bot.chatList.last.chatIndex == 1;
-      });
-
-      var chatMessages = chatBloc.bot.chatList;
-
-      Future.delayed(const Duration(milliseconds: 0), () {
-        textToSpeechBloc.add(StartSpeaking(
-          messageIndex: chatMessages.length - 1,
-          text: chatMessages[chatMessages.length - 1].msg,
-        ));
-      });
-    } catch (error) {
-      log("error $error");
-      Services.errorSnackBar(
-        context: context,
-        errorMessage: '$error',
-      );
-    } finally {
-      if (mounted) {
-        scrollListToEnd();
-      }
-    }
+    chatBloc.add(SendMessageGPT(
+      msg: textEditingController.text,
+      chosenModelId: modelsBloc.currentModel,
+    ));
+    textEditingController.clear();
+    focusNode.unfocus();
+    scrollListToEnd();
   }
 
   void deleteMessage(int index) {
@@ -154,9 +162,6 @@ class _ChatScreenState extends State<ChatScreen> {
               errorMessage: state.message,
             );
           }
-          if (state is ChatAnimating) {
-            _shouldAnimate = true;
-          }
           if (state is ChatLoaded) {
             WidgetsBinding.instance.addPostFrameCallback(
               (_) => scrollListToEnd(),
@@ -184,7 +189,8 @@ class _ChatScreenState extends State<ChatScreen> {
                   ChatListWidget(
                     chatList: chatBloc.bot.chatList,
                     listScrollController: _listScrollController,
-                    shouldAnimate: _shouldAnimate,
+                    shouldAnimate: chatBloc.shouldAnimate,
+                    stopAnimation: () => chatBloc.add(StopAnimating()),
                     deleteMessage: deleteMessage,
                   ),
                   if (state is ChatWaiting) ...[
@@ -199,7 +205,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     focusNode: focusNode,
                     sendMessage: () => sendMessageFCT(
                       modelsBloc: modelsBloc,
-                      chatBloc: chatBloc,
+                      // chatBloc: chatBloc,
                     ),
                   ),
                 ],

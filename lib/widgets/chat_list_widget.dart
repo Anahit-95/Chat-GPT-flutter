@@ -3,13 +3,14 @@ import 'package:flutter/material.dart';
 import '../constants/constants.dart';
 import '../models/chat_model.dart';
 import '../services/services.dart';
-import 'chat_widget.dart';
+import './chat_widget.dart';
 
 class ChatListWidget extends StatelessWidget {
   final List<ChatModel> chatList;
   final ScrollController listScrollController;
   final bool shouldAnimate;
   final void Function(int index) deleteMessage;
+  final void Function() stopAnimation;
 
   const ChatListWidget({
     Key? key,
@@ -17,6 +18,7 @@ class ChatListWidget extends StatelessWidget {
     required this.listScrollController,
     required this.shouldAnimate,
     required this.deleteMessage,
+    required this.stopAnimation,
   }) : super(key: key);
 
   @override
@@ -63,6 +65,7 @@ class ChatListWidget extends StatelessWidget {
               chatIndex: chatList[index].chatIndex,
               messageIndex: index,
               shouldAnimate: (chatList.length - 1 == index && shouldAnimate),
+              stopAnimation: stopAnimation,
             ),
           );
         },

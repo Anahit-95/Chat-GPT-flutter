@@ -1,5 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:chat_gpt_api/blocks/conversation_bloc/conversation_bloc.dart';
+import 'package:chat_gpt_api/blocks/text_to_speech_bloc/text_to_speech_bloc.dart';
 import 'package:chat_gpt_api/models/chat_model.dart';
 import 'package:chat_gpt_api/models/conversation_model.dart';
 import 'package:chat_gpt_api/services/db_services.dart';
@@ -7,6 +8,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockDatabaseHelper extends Mock implements DatabaseHelper {}
+
+class MockTextToSpeechBloc extends Mock implements TextToSpeechBloc {}
 
 void main() {
   late ConversationBloc conversationBloc;
@@ -26,6 +29,7 @@ void main() {
       dbHelper: mockDatabaseHelper,
       conversation: conversation,
       systemMessage: 'You are a helpfull assistant',
+      textToSpeechBloc: MockTextToSpeechBloc(),
     );
   });
 

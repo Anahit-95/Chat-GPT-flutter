@@ -1,7 +1,11 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:file_picker/file_picker.dart';
+
+import 'package:chat_gpt_api/blocks/text_to_speech_bloc/text_to_speech_bloc.dart';
 
 import '../../models/bot_model.dart';
 import '../../models/chat_model.dart';
@@ -14,21 +18,30 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   final Bot bot;
   List<ChatModel> _chatList = [];
   String _errorMessage = '';
+  bool shouldAnimate = false;
+  TextToSpeechBloc textToSpeechBloc;
 
-  ChatBloc({required this.bot}) : super(ChatLoading()) {
+  ChatBloc({
+    required this.bot,
+    required this.textToSpeechBloc,
+  }) : super(ChatLoading()) {
     on<FetchChat>(_onFetchChat);
     on<AddUserMessage>(_onAddUserMessage);
     on<AddBotMessage>(_onAddBotMessage);
     on<DeleteMessage>(_onDeleteMessage);
     on<ClearChat>(_onClearChat);
     on<SendMessageAndGetAnswers>(_onSendMessageAndGetAnswers);
+    on<StartAnimating>(_onStartAnimating);
+    on<StopAnimating>(_onStopAnimating);
+    on<SendAudioFile>(_onSendAudioFile);
+    on<SendMessageGPT>(_onSendMessageGPT);
   }
 
   Future<void> _onFetchChat(FetchChat event, Emitter<ChatState> emit) async {
     try {
       emit(ChatLoading());
       _chatList = bot.chatList;
-      await Future.delayed(const Duration(seconds: 1));
+      // await Future.delayed(const Duration(seconds: 1));
       emit(ChatLoaded(bot: bot));
     } catch (e) {
       emit(const ChatError('Failed to get chat'));
@@ -56,7 +69,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           (value) => _chatList.add(ChatModel(msg: value, chatIndex: 1)),
         );
       }
-      emit(ChatAnimating());
+      add(StartAnimating());
       emit(ChatLoaded(bot: bot.copyWith(chatList: _chatList)));
     } catch (e) {
       emit(ChatError('Failed to send message: $e'));
@@ -100,7 +113,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           modelId: event.chosenModelId,
           systemMessage: bot.systemMessage,
         ));
-        emit(ChatAnimating());
+        add(StartAnimating());
       } catch (e) {
         _errorMessage = e.toString();
         emit(ChatError(_errorMessage));
@@ -111,7 +124,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           message: event.msg,
           modelId: event.chosenModelId,
         ));
-        emit(ChatAnimating());
+        add(StartAnimating());
       } catch (e) {
         _errorMessage = e.toString();
         emit(ChatError(_errorMessage));
@@ -120,10 +133,73 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     emit(ChatLoaded(bot: bot.copyWith(chatList: _chatList)));
   }
 
-  FutureOr<void> _onDeleteMessage(
-      DeleteMessage event, Emitter<ChatState> emit) {
+  void _onDeleteMessage(DeleteMessage event, Emitter<ChatState> emit) {
     emit(ChatWaiting());
     _chatList.remove(event.msg);
     emit(ChatLoaded(bot: bot.copyWith(chatList: _chatList)));
+  }
+
+  void _onStartAnimating(StartAnimating event, Emitter<ChatState> emit) {
+    shouldAnimate = true;
+    emit(ChatAnimating());
+  }
+
+  void _onStopAnimating(StopAnimating event, Emitter<ChatState> emit) {
+    shouldAnimate = false;
+    emit(ChatLoaded(bot: bot));
+  }
+
+  FutureOr<void> _onSendAudioFile(
+      SendAudioFile event, Emitter<ChatState> emit) async {
+    if (state is ChatWaiting) {
+      emit(const ChatError('You cant send multiple messages at a time.'));
+    } else {
+      try {
+        FilePickerResult? result = await FilePicker.platform.pickFiles();
+
+        if (result != null) {
+          add(AddUserMessage(msg: result.files.single.name));
+          add(AddBotMessage(filePath: result.files.single.path!));
+        }
+      } catch (error) {
+        emit(ChatError(error.toString()));
+      }
+    }
+  }
+
+  Future<void> _onSendMessageGPT(
+      SendMessageGPT event, Emitter<ChatState> emit) async {
+    if (state is ChatWaiting) {
+      emit(const ChatError('You cant send multiple messages at a time.'));
+      return;
+    }
+    if (event.msg.isEmpty) {
+      emit(const ChatError('Please type a message.'));
+      return;
+    }
+    try {
+      String msg = event.msg;
+      add(AddUserMessage(msg: msg));
+
+      add(SendMessageAndGetAnswers(
+        msg: msg,
+        chosenModelId: event.chosenModelId,
+      ));
+
+      await stream.firstWhere((state) {
+        return state is ChatLoaded && bot.chatList.last.chatIndex == 1;
+      });
+
+      var chatMessages = bot.chatList;
+
+      Future.delayed(const Duration(milliseconds: 0), () {
+        textToSpeechBloc.add(StartSpeaking(
+          messageIndex: chatMessages.length - 1,
+          text: chatMessages[chatMessages.length - 1].msg,
+        ));
+      });
+    } catch (error) {
+      emit(ChatError(error.toString()));
+    }
   }
 }

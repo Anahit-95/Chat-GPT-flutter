@@ -3,11 +3,13 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:file_picker/file_picker.dart';
 
 import '../../models/chat_model.dart';
 import '../../models/conversation_model.dart';
 import '../../services/api_services.dart';
 import '../../services/db_services.dart';
+import '../text_to_speech_bloc/text_to_speech_bloc.dart';
 
 part 'conversation_event.dart';
 part 'conversation_state.dart';
@@ -15,11 +17,14 @@ part 'conversation_state.dart';
 class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
   final ConversationModel conversation;
   final String? systemMessage;
-  List<ChatModel> _messages = [];
   final DatabaseHelper _dbHelper;
+  TextToSpeechBloc textToSpeechBloc;
+  List<ChatModel> _messages = [];
+  bool shouldAnimate = false;
 
   ConversationBloc({
     required DatabaseHelper dbHelper,
+    required this.textToSpeechBloc,
     required this.conversation,
     required this.systemMessage,
   })  : _dbHelper = dbHelper,
@@ -31,6 +36,10 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
     on<SendMessageAndGetAnswers>(_onSendMessageAndGetAnswers);
     on<DeleteMessage>(_onDeleteMessages);
     on<UpdateMessageList>(_onUpdateMessageList);
+    on<StartAnimating>(_onStartAnimating);
+    on<StopAnimating>(_onStopAnimating);
+    on<SendAudioFile>(_onSendAudioFile);
+    on<SendMessageGPT>(_onSendMessageGPT);
   }
 
   FutureOr<void> _onFetchConversation(
@@ -67,30 +76,7 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
     } catch (e) {
       emit(ConversationError('Failed to load message: $e'));
     }
-
-    // _messages.add(ChatModel(msg: event.msg, chatIndex: 0));
-    // emit(ConversationLoaded(
-    //   conversation: conversation.copyWith(messages: _messages),
-    // ));
   }
-
-  // FutureOr<void> _onAddBotMessage(
-  //     AddBotMessage event, Emitter<ConversationState> emit) async {
-  //   emit(ConversationWaiting());
-  //   if (conversation.type == 'Audio Reader') {
-  //     await ApiService.convertSpeechToText(event.filePath).then(
-  //       (value) => _messages.add(ChatModel(msg: value, chatIndex: 1)),
-  //     );
-  //   } else {
-  //     await ApiService.translateSpeechToEnglish(event.filePath).then(
-  //       (value) => _messages.add(ChatModel(msg: value, chatIndex: 1)),
-  //     );
-  //   }
-  //   emit(ConversationAnimating());
-  //   emit(ConversationLoaded(
-  //     conversation: conversation.copyWith(messages: _messages),
-  //   ));
-  // }
 
   FutureOr<void> _onAddBotMessage(
       AddBotMessage event, Emitter<ConversationState> emit) async {
@@ -115,7 +101,7 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
           conversation.id, ChatModel(msg: message, chatIndex: 1));
       ChatModel chat = ChatModel(id: id, msg: message, chatIndex: 1);
       _messages.add(chat);
-      emit(ConversationAnimating());
+      add(StartAnimating());
       emit(ConversationLoaded(
         conversation: conversation.copyWith(messages: _messages),
       ));
@@ -164,12 +150,6 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
       ApiService.messages = messages;
 
       try {
-        // _messages.addAll(await ApiService.sendMessageGPT(
-        //   message: event.msg,
-        //   modelId: event.chosenModelId,
-        //   systemMessage: systemMessage,
-        // ));
-
         List<ChatModel> chatList = await ApiService.sendMessageGPT(
           message: event.msg,
           modelId: event.chosenModelId,
@@ -180,17 +160,12 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
           chat = chat.copyWith(id: id);
           _messages.add(chat);
         }
-        emit(ConversationAnimating());
+        add(StartAnimating());
       } catch (e) {
         emit(ConversationError('Failed to sent the message: $e'));
       }
     } else {
       try {
-        // _messages.addAll(await ApiService.sendMessage(
-        //   message: event.msg,
-        //   modelId: event.chosenModelId,
-        // ));
-
         List<ChatModel> chatList = await ApiService.sendMessage(
           message: event.msg,
           modelId: event.chosenModelId,
@@ -200,7 +175,7 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
           chat = chat.copyWith(id: id);
           _messages.add(chat);
         }
-        emit(ConversationAnimating());
+        add(StartAnimating());
       } catch (e) {
         emit(ConversationError('Failed to sent the message: $e'));
       }
@@ -214,17 +189,13 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
       DeleteMessage event, Emitter<ConversationState> emit) async {
     try {
       emit(ConversationWaiting());
-      print('event started');
       if (event.msg.id != null) {
         await _dbHelper.deleteMessage(conversation.id, event.msg.id!);
-        print('message deleted from database');
       }
       _messages.remove(event.msg);
-      print('message deleted from list');
       emit(ConversationLoaded(
         conversation: conversation.copyWith(messages: _messages),
       ));
-      print('event completed');
     } catch (e) {
       emit(ConversationError('Failed to delete message: $e'));
     }
@@ -242,6 +213,79 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
       ));
     } catch (e) {
       emit(ConversationError('Failed to save messages: $e'));
+    }
+  }
+
+  void _onStartAnimating(
+      StartAnimating event, Emitter<ConversationState> emit) {
+    shouldAnimate = true;
+    emit(ConversationAnimating());
+  }
+
+  void _onStopAnimating(StopAnimating event, Emitter<ConversationState> emit) {
+    shouldAnimate = false;
+    emit(ConversationLoaded(conversation: conversation));
+  }
+
+  FutureOr<void> _onSendAudioFile(
+      SendAudioFile event, Emitter<ConversationState> emit) async {
+    if (state is ConversationWaiting) {
+      emit(
+        const ConversationError('You cant send multiple messages at a time.'),
+      );
+    } else {
+      try {
+        FilePickerResult? result = await FilePicker.platform.pickFiles();
+
+        if (result != null) {
+          add(AddUserMessage(msg: result.files.single.name));
+
+          add(AddBotMessage(filePath: result.files.single.path!));
+        }
+      } catch (error) {
+        emit(ConversationError(error.toString()));
+      }
+    }
+  }
+
+  Future<void> _onSendMessageGPT(
+      SendMessageGPT event, Emitter<ConversationState> emit) async {
+    if (state is ConversationWaiting) {
+      emit(
+        const ConversationError('You cant send multiple messages at a time.'),
+      );
+      return;
+    }
+    if (event.msg.isEmpty) {
+      emit(
+        const ConversationError('Please type a message.'),
+      );
+      return;
+    }
+    try {
+      String msg = event.msg;
+      add(AddUserMessage(msg: msg));
+
+      add(SendMessageAndGetAnswers(
+        msg: msg,
+        chosenModelId: event.chosenModelId,
+      ));
+
+      await stream.firstWhere((state) {
+        return state is ConversationLoaded &&
+            conversation.messages.last.chatIndex == 1;
+      });
+
+      var convMessages = conversation.messages;
+
+      Future.delayed(const Duration(milliseconds: 0), () {
+        textToSpeechBloc.add(StartSpeaking(
+          messageIndex: convMessages.length - 1,
+          text: convMessages[convMessages.length - 1].msg,
+        ));
+      });
+    } catch (error) {
+      emit(ConversationError(error.toString()));
     }
   }
 }

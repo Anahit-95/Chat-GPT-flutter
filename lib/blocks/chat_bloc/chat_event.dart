@@ -28,6 +28,8 @@ class AddBotMessage extends ChatEvent {
   List<Object> get props => [filePath];
 }
 
+class SendAudioFile extends ChatEvent {}
+
 class DeleteMessage extends ChatEvent {
   final ChatModel msg;
   const DeleteMessage({
@@ -44,9 +46,28 @@ class SendMessageAndGetAnswers extends ChatEvent {
   final String msg;
   final String chosenModelId;
 
-  const SendMessageAndGetAnswers(
-      {required this.msg, required this.chosenModelId});
+  const SendMessageAndGetAnswers({
+    required this.msg,
+    required this.chosenModelId,
+  });
 
   @override
   List<Object> get props => [msg, chosenModelId];
 }
+
+class SendMessageGPT extends ChatEvent {
+  final String msg;
+  final String chosenModelId;
+
+  const SendMessageGPT({
+    required this.msg,
+    required this.chosenModelId,
+  });
+
+  @override
+  List<Object> get props => [msg, chosenModelId];
+}
+
+class StartAnimating extends ChatEvent {}
+
+class StopAnimating extends ChatEvent {}

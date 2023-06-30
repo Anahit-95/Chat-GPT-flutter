@@ -4,11 +4,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../blocks/conversation_bloc/conversation_bloc.dart';
 import '../blocks/conversations_bloc/conversation_list_bloc.dart';
+import '../blocks/text_to_speech_bloc/text_to_speech_bloc.dart';
 import '../models/bot_model.dart';
 import '../models/conversation_model.dart';
+import '../services/services.dart';
 import '../screens/audio_conversation_screen.dart';
 import '../screens/conversation_screen.dart';
-import '../services/services.dart';
 
 class ConversationItem extends StatelessWidget {
   final ConversationModel conversation;
@@ -54,6 +55,7 @@ class ConversationItem extends StatelessWidget {
                       dbHelper: DatabaseHelper(),
                       conversation: conversation,
                       systemMessage: currentBot.systemMessage,
+                      textToSpeechBloc: TextToSpeechBloc(),
                     ),
                     child: screen,
                   ),

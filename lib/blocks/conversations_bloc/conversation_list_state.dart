@@ -10,6 +10,8 @@ abstract class ConversationListState extends Equatable {
 
 class ConversationListLoading extends ConversationListState {}
 
+class ConversationCreated extends ConversationListState {}
+
 class ConversationListLoaded extends ConversationListState {
   final List<ConversationModel> conversations;
   const ConversationListLoaded({
